@@ -1,7 +1,7 @@
-PyTemplate API Documentation
+BenchMatcha API Documentation
 ============================
 
-PyTemplate API documentation.
+BenchMatcha API documentation.
 
 Here are python and cython code snippets to demonstrate the use of respective customized
 lexers with custom syntax highlighting style. These examples are not necessarily meant

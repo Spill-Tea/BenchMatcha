@@ -31,7 +31,7 @@
 
 Arguments:
     new-name (str): new project name (defaults to root directory name)
-    old-name (str): old project name (defaults to PyTemplate)
+    old-name (str): old project name (defaults to BenchMatcha)
     path (str): root path of project (defaults to cwd)
     dry-run (bool): print out what files / directories would be modified
     timeout (int): Time in seconds to allow a subprocess to run.
@@ -197,8 +197,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--old-name",
-        default="PyTemplate",
-        help="Old project name to replace (optional, defaults to PyTemplate)",
+        default="BenchMatcha",
+        help="Old project name to replace (optional, defaults to BenchMatcha)",
     )
     parser.add_argument(
         "--path",

@@ -3,7 +3,7 @@ requires = ["setuptools>=67.6.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "PyTemplate"
+name = "BenchMatcha"
 authors = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
 maintainers = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
 description = "Project description here."
@@ -14,11 +14,11 @@ classifiers = ["Programming Language :: Python :: 3"]
 dynamic = ["version", "readme", "dependencies"]
 
 [project.urls]
-homepage = "https://github.com/Spill-Tea/PyTemplate"
-issues = "https://github.com/Spill-Tea/PyTemplate/issues"
+homepage = "https://github.com/Spill-Tea/BenchMatcha"
+issues = "https://github.com/Spill-Tea/BenchMatcha/issues"
 
 [tool.setuptools.dynamic]
-version = { attr = "PyTemplate.__version__" }
+version = { attr = "BenchMatcha.__version__" }
 readme = { file = ["README.md"], content-type = "text/markdown" }
 dependencies = { file = ["requirements.txt"] }
 
@@ -33,7 +33,7 @@ exclude = ["benchmarks", "docs", "tests"]
 "*" = ["py.typed", "*.pyi"]
 
 [project.optional-dependencies]
-dev = ["PyTemplate[doc,test,lint,type]", "tox", "pre-commit"]
+dev = ["BenchMatcha[doc,test,lint,type]", "tox", "pre-commit"]
 doc = ["sphinx", "furo", "sphinx_multiversion"]
 test = ["pytest", "coverage", "pytest-xdist"]
 lint = ["pylint", "ruff"]
@@ -46,7 +46,7 @@ addopts = "-n auto -rA"
 [tool.coverage.run]
 parallel = true
 branch = true
-source = ["PyTemplate"]
+source = ["BenchMatcha"]
 disable_warnings = ["no-data-collected", "module-not-imported"]
 
 [tool.coverage.paths]
@@ -61,7 +61,7 @@ skip_empty = true
 exclude_also = ["def __repr__", 'if __name__ == "__main__"']
 
 [tool.mypy]
-mypy_path = "PyTemplate"
+mypy_path = "BenchMatcha"
 warn_unused_ignores = true
 allow_redefinition = false
 force_uppercase_builtins = true

@@ -42,7 +42,7 @@ sys.path.append(os.path.abspath("./_ext"))  # Required for custom extensions
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-project = "PyTemplate"
+project = "BenchMatcha"
 copyright = "2025, Jason C Del Rio (Spill-Tea)"
 author = "Jason C Del Rio (Spill-Tea)"
 release = "v0.0.1"
@@ -85,7 +85,7 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 # html_logo = "_static/logo.svg"
-github_url = "https://github.com/Spill-Tea/PyTemplate"
+github_url = "https://github.com/Spill-Tea/BenchMatcha"
 
 # Theme options
 html_theme_options = {

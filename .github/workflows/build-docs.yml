@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: Checkout PyTemplate Project
+      - name: Checkout BenchMatcha Project
         uses: actions/checkout@v4
         with:
           fetch-depth: 0

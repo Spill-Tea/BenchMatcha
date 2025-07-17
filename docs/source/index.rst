@@ -1,4 +1,4 @@
-PyTemplate documentation
+BenchMatcha documentation
 ========================
 
 Include text here.

@@ -1,15 +1,15 @@
-# PyTemplate
+# BenchMatcha
 [![build status][buildstatus-image]][buildstatus-url]
 
-[buildstatus-image]: https://github.com/Spill-Tea/PyTemplate/actions/workflows/python-app.yml/badge.svg?branch=main
-[buildstatus-url]: https://github.com/Spill-Tea/PyTemplate/actions?query=branch%3Amain
+[buildstatus-image]: https://github.com/Spill-Tea/BenchMatcha/actions/workflows/python-app.yml/badge.svg?branch=main
+[buildstatus-url]: https://github.com/Spill-Tea/BenchMatcha/actions?query=branch%3Amain
 
 Python Project Template. Be sure to create a template directly
 from github.
 
 <!-- omit in toc -->
 ## Table of Contents
-- [PyTemplate](#pytemplate)
+- [BenchMatcha](#pytemplate)
   - [Using this template](#using-this-template)
     - [Manual Editing of Project Template](#manual-editing-of-project-template)
   - [Installation](#installation)
@@ -23,7 +23,7 @@ Clone that new repository (e.g. `mynewproject`), and run the helper script `rena
 ```bash
 git clone https://github.com/<username>/<projectname>.git
 cd <projectname>
-python rename.py --old-name PyTemplate --new-name <projectname>
+python rename.py --old-name BenchMatcha --new-name <projectname>
 
 ```
 We provide a simple helper script `rename.py` in the root directory to help rename a few
@@ -51,7 +51,7 @@ PRO-TIP: you could theoretically run the helper script several times to replace 
 project name, author name, email, and (github) username. Something like:
 
 ```bash
-python rename.py --old-name PyTemplate --new-name <project_name>
+python rename.py --old-name BenchMatcha --new-name <project_name>
 python rename.py --old-name 'Jason C Del Rio' --new-name <author_name>
 python rename.py --old-name spillthetea917@gmail.com --new-name <author_email>
 python rename.py --old-name Spill-Tea --new-name <github_user_name>
@@ -61,14 +61,14 @@ python rename.py --old-name Spill-Tea --new-name <github_user_name>
 Clone the repository and pip install.
 
 ```bash
-git clone https://github.com/Spill-Tea/PyTemplate.git
-cd PyTemplate
+git clone https://github.com/Spill-Tea/BenchMatcha.git
+cd BenchMatcha
 pip install .
 ```
 
 Alternatively, you may install directly from github.
 ```bash
-pip install git+https://github.com/Spill-Tea/PyTemplate@main
+pip install git+https://github.com/Spill-Tea/BenchMatcha@main
 ```
 
 
