@@ -1,0 +1,49 @@
+name: Build Docs
+
+on:
+  push:
+    branches: [ main, dev ]
+    tags: [ v* ]
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout PyTemplate Project
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version-default
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install wheel setuptools
+          pip install ".[doc]"
+
+      - name: Build documentation
+        run: |
+          sphinx-multiversion docs/source _build
+
+      - name: Add Redirect Page
+        # NOTE: when only one version is built, it is not within a separate directory
+        if: ${{ hashFiles('_build/index.html') == '' }}
+        run: |
+          cp docs/source/_templates/redirect.html _build/index.html
+
+      - name: Deploy to Github Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_build
+          publish_branch: gh-pages
+          force_orphan: true

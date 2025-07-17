@@ -1,0 +1,26 @@
+# ignore all root items
+/*
+
+# unignore folders
+!src/
+!tests/
+!docs/
+!.github/
+
+# unignore files
+!.gitignore
+!.gitattributes
+!setup.py
+!README.md
+!LICENSE
+!pyproject.toml
+!.pre-commit-config.yaml
+!tox.ini
+!requirements.txt
+!.python-version-default
+!rename.py
+
+# recursively re-ignore
+__pycache__
+*.egg-info/
+docs/build

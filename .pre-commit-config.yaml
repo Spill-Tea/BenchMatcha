@@ -1,0 +1,26 @@
+ci:
+  autoupdate_schedule: quarterly
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^tests/(integration|unit)/data/
+      - id: end-of-file-fixer
+        exclude: ^(tests/(integration|unit)/data/|LICENSE|.python-version-default)
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [ --maxkb=1024 ]
+      - id: requirements-txt-fixer
+
+  - repo: https://github.com/Spill-Tea/addlicense-pre-commit
+    rev: v1.1.2
+    hooks:
+      - id: addlicense
+        language: golang
+        args: [
+          -f, LICENSE,
+          ]
+        types_or: [ python, cython ]
