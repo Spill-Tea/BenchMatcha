@@ -6,11 +6,21 @@ build-backend = "setuptools.build_meta"
 name = "BenchMatcha"
 authors = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
 maintainers = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
-description = "Project description here."
+description = "Google Benchmark Suite Runner and Regression Analyzer."
 license = { file = "LICENSE" }
-requires-python = ">=3.7"
-keywords = ["keyword1", "keyword2"]
-classifiers = ["Programming Language :: Python :: 3"]
+requires-python = ">=3.10"
+keywords = ["benchmark", "regression", "analysis"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Development Status :: 1 - Planning",
+  "License :: OSI Approved :: BSD License",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Utilities",
+  "Topic :: System :: Benchmark",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Software Development :: Libraries",
+  ]
 dynamic = ["version", "readme", "dependencies"]
 
 [project.urls]
