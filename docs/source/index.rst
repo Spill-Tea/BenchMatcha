@@ -1,5 +1,5 @@
 BenchMatcha documentation
-========================
+=========================
 
 Include text here.
 
