@@ -1,0 +1,7 @@
+google-benchmark
+numpy
+orjson
+plotly
+pytest
+scipy
+wurlitzer

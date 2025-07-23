@@ -42,6 +42,9 @@ exclude = ["benchmarks", "docs", "tests"]
 [tool.setuptools.package-data]
 "*" = ["py.typed", "*.pyi"]
 
+[project.scripts]
+benchmatcha = "BenchMatcha.runner:main"
+
 [project.optional-dependencies]
 dev = ["BenchMatcha[doc,test,lint,type]", "tox", "pre-commit"]
 doc = ["sphinx", "furo", "sphinx_multiversion"]
@@ -67,17 +70,14 @@ fail_under = 95.0
 precision = 1
 show_missing = true
 skip_empty = true
-# skip_covered = true
 exclude_also = ["def __repr__", 'if __name__ == "__main__"']
 
 [tool.mypy]
 mypy_path = "BenchMatcha"
-warn_unused_ignores = true
 allow_redefinition = false
-force_uppercase_builtins = true
+warn_unused_ignores = true
 
 [tool.pylint.main]
-# extension-pkg-whitelist = []
 ignore = ["tests", "dist", "build"]
 fail-under = 9.0
 jobs = 0
@@ -99,6 +99,8 @@ max-line-length = 88
 [tool.pylint."messages control"]
 disable = [
   "R1731", # consider-using-max-builtin
+  "R0903", # too-few-public-methods
+  "R1735", # use-dict-literal
 ]
 
 [tool.pylint."*.pyi"]
