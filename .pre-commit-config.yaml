@@ -15,11 +15,10 @@ repos:
         args: [ --maxkb=1024 ]
       - id: requirements-txt-fixer
 
-  - repo: https://github.com/Spill-Tea/addlicense-pre-commit
-    rev: v1.1.2
+  - repo: https://github.com/google/addlicense
+    rev: v1.2.0
     hooks:
       - id: addlicense
-        language: golang
         args: [
           -f, LICENSE,
           ]
