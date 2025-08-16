@@ -55,7 +55,7 @@ def is_readable_io_protocol(obj: object) -> bool:
 
     return (
         isinstance(obj, IO | IOBase) or all(map(lambda x: hasattr(obj, x), methods))
-    ) and obj.readable()
+    ) and obj.readable()  # type: ignore[attr-defined]
 
 
 class Handler(ABC):
@@ -144,7 +144,7 @@ def dispatch(obj: object, encoding: str = "utf8") -> Handler:
         return HandleBytes(obj, encoding)
 
     elif is_readable_io_protocol(obj):
-        return HandleIO(obj, encoding)
+        return HandleIO(obj, encoding)  # type: ignore[arg-type]
 
     raise TypeError(f"Unsupported object type: {type(obj)}")
 
