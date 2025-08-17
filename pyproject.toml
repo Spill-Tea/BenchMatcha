@@ -8,7 +8,7 @@ authors = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
 maintainers = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
 description = "Google Benchmark Suite Runner and Regression Analyzer."
 license = { file = "LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["benchmark", "regression", "analysis"]
 classifiers = [
   "Programming Language :: Python :: 3",

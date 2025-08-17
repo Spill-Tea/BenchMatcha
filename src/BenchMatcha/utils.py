@@ -58,7 +58,7 @@ def _simple_stats(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 # https://github.com/google/benchmark/blob/main/src/complexity.cc#L52-L69
-class BigO(str, enum.ReprEnum):
+class BigO(enum.StrEnum):
     """Big o notation string identifiers."""
 
     o1 = "(1)"
