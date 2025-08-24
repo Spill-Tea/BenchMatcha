@@ -38,8 +38,11 @@ from typing import Any, Literal, Self
 
 import numpy as np
 
+from .errors import SchemaError
+
 
 BuildType = Literal["release", "debug"]
+SUPPORTED_VERSIONS: tuple[int, ...] = (1,)
 
 
 def parse_datetime(x: str) -> datetime:
@@ -73,6 +76,9 @@ class Cache:
             size=record["size"],
             num_sharing=record["num_sharing"],
         )
+
+    def to_json(self) -> dict:
+        return self.__dict__.copy()
 
 
 @dataclass
@@ -115,6 +121,9 @@ class BenchmarkRecord:
             time_unit=record["time_unit"],
         )
 
+    def to_json(self) -> dict:
+        return self.__dict__.copy()
+
 
 @dataclass
 class ComplexityInfo:
@@ -147,6 +156,9 @@ class ComplexityInfo:
             cpu_coefficient=record["cpu_coefficient"],
         )
 
+    def to_json(self) -> dict:
+        return self.__dict__.copy()
+
 
 @dataclass
 class BenchmarkArray:
@@ -170,6 +182,12 @@ class BenchmarkArray:
     real_time: np.ndarray  # 2D array (n_sizes x repetitions)
     cpu_time: np.ndarray  # 2D array (n_sizes x repetitions)
     complexity: ComplexityInfo
+
+    def to_json(self) -> dict:
+        d = self.__dict__.copy()
+        d["complexity"] = self.complexity.to_json()
+
+        return d
 
 
 def get_benchmark_records(
@@ -298,3 +316,23 @@ class BenchmarkContext:
         )
 
         return cls(**context, caches=caches, date=date, benchmarks=benchmarks)
+
+    def to_json(self) -> dict:
+        data = self.__dict__.copy()
+        data["caches"] = [i.to_json() for i in self.caches]
+        data["benchmarks"] = [j.to_json() for j in self.benchmarks]
+
+        return data
+
+
+def parse_version(record: dict[str, Any]) -> BenchmarkContext:
+    """Map schema version to correct parsing engine."""
+    schema_version = int(record.get("context", {}).get("json_schema_version", -1))
+    if schema_version not in SUPPORTED_VERSIONS:
+        raise SchemaError.response(str(schema_version))
+
+    match schema_version:
+        case 1:
+            return BenchmarkContext.from_json(record)
+        case _:
+            raise SchemaError.response(str(schema_version))
