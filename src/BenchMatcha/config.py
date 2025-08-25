@@ -31,7 +31,7 @@
 
 import logging
 
-import toml
+import toml  # type: ignore[import-untyped]
 
 from . import plotting
 
