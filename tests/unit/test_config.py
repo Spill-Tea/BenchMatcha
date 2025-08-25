@@ -29,6 +29,7 @@
 
 """Test config module."""
 
+from contextlib import contextmanager
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -62,48 +63,64 @@ def toml_data() -> dict:
     }
 
 
+@contextmanager
+def reset(c: type[config.Config]):
+    """Simple contextmanager to reset config to original default values."""
+    default: dict = {key: getattr(c, key) for key in c.__annotations__.keys()}
+    yield
+
+    for k, v in default.items():
+        setattr(c, k, v)
+
+
 def test_config_load(toml_str: str, toml_data: dict) -> None:
     """Confirm toml data loads correctly."""
-    with StringIO(toml_str) as stream:
+    with reset(config.Config), StringIO(toml_str) as stream:
         instance = config.ConfigUpdater(stream)
         result = instance.load()
 
     assert result == toml_data, "Expected same object"
 
 
-def _assert_config_is_updated():
+def _assert_config_is_updated() -> None:
     assert config.Config.color == "#FFF", "Expected color to be updated."
     assert config.Config.line_color == "#333", "Expected line color to be updated."
     assert config.Config.font == "Courier", "Expected font to be updated."
+    assert not hasattr(config.Config, "upsupported_key"), (
+        "Expected unsupported key to be bypassed."
+    )
 
 
 def test_config_private_update(toml_data: dict) -> None:
     """Confirm config data is updated correctly."""
-    instance = config.ConfigUpdater("")
-    instance._update(toml_data)
-    _assert_config_is_updated()
+    with reset(config.Config):
+        instance = config.ConfigUpdater("")
+        instance._update(toml_data)
+        _assert_config_is_updated()
 
 
 def test_config_update(toml_str: str) -> None:
     """Confirm toml data loads correctly."""
-    with StringIO(toml_str) as stream:
+    with reset(config.Config), StringIO(toml_str) as stream:
         instance = config.ConfigUpdater(stream)
         instance.update()
-    _assert_config_is_updated()
+        _assert_config_is_updated()
 
 
 @patch.object(config.ConfigUpdater, "load")
 def test_config_update_mock(mock: MagicMock, toml_data: dict) -> None:
     """Confirm config is updated by mocking load method of ConfigUpdater."""
     mock.return_value = toml_data
-    instance = config.ConfigUpdater("")
-    instance.update()
-    _assert_config_is_updated()
+    with reset(config.Config):
+        instance = config.ConfigUpdater("")
+        instance.update()
+        _assert_config_is_updated()
 
 
 @patch.object(config.ConfigUpdater, "load")
 def test_config_update_function(mock: MagicMock, toml_data: dict) -> None:
     """Confirm config is updated from available function api."""
     mock.return_value = toml_data
-    config.update_config_from_pyproject("")
-    _assert_config_is_updated()
+    with reset(config.Config):
+        config.update_config_from_pyproject("")
+        _assert_config_is_updated()
