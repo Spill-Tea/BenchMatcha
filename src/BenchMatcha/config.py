@@ -47,13 +47,52 @@ class Config:
     font: str = "Space Grotesk Light, Courier New, monospace"
 
 
+class ConfigUpdater:
+    """Configuration updater through pyproject config file.
+
+    Args:
+        path (str): path to valid configuration file.
+        config (Config): configuration class to update.
+
+    """
+
+    path: str
+    config: type[Config]
+
+    def __init__(self, path: str, config: type[Config] = Config) -> None:
+        self.path = path
+        self.config = config
+
+    def load(self) -> dict:
+        """Load toml data from path."""
+        return toml.load(self.path)
+
+    def _update(self, data: dict) -> None:
+        for key, value in data.get("tool", {}).get("BenchMatcha", {}).items():
+            if not hasattr(self.config, key):
+                log.info("Unsupported tool key: %s", key)
+                continue
+
+            setattr(self.config, key, value)
+
+    def update(self) -> None:
+        """Parse toml path and update default configuration."""
+        data: dict = self.load()
+        self._update(data)
+
+
 def update_config_from_pyproject(path: str) -> None:
-    """Update default config from pyproject toml file."""
-    data = toml.load(path)
+    """Update default config from pyproject toml file.
 
-    for key, value in data.get("tool", {}).get("BenchMatcha", {}).items():
-        if not hasattr(Config, key):
-            log.info("Unsupported tool key: %s", key)
-            continue
+    Example:
 
-        setattr(Config, key, value)
+        .. code-block: toml
+
+            [tool.BenchMatcha]
+            color="#FFF"
+            line_color="#333"
+            font="Courier"
+
+    """
+    cu = ConfigUpdater(path)
+    cu.update()
