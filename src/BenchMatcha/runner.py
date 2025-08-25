@@ -129,7 +129,7 @@ def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
 
 
 def _run() -> BenchmarkContext:
-    # TODO: Improve logic here (e.g. --benchmark_format=csv)
+    # TODO: Improve logic here
     if "--benchmark_format=json" not in sys.argv:
         sys.argv.append("--benchmark_format=json")
 
@@ -194,12 +194,12 @@ def run(path: str, cache_dir: str) -> None:
 
 
 # TODO: Handle a list of separated filepaths.
-def run_paths(paths: list[str]) -> None:
-    """Run benchmarks against a list of paths."""
-    for path in paths:
-        manage_registration(path)
+# def run_paths(paths: list[str]) -> None:
+#     """Run benchmarks against a list of paths."""
+#     for path in paths:
+#         manage_registration(path)
 
-    context: BenchmarkContext = _run()
+#     context: BenchmarkContext = _run()
 
 
 def main() -> None:

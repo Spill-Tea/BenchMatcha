@@ -78,6 +78,7 @@ allow_redefinition = false
 warn_unused_ignores = true
 
 [tool.pylint.main]
+extension-pkg-allow-list = ["orjson"]
 ignore = ["tests", "dist", "build"]
 fail-under = 9.0
 jobs = 0
@@ -101,6 +102,7 @@ disable = [
   "R1731", # consider-using-max-builtin
   "R0903", # too-few-public-methods
   "R1735", # use-dict-literal
+  "W1514", # unspecified-encoding
 ]
 
 [tool.pylint."*.pyi"]

@@ -57,6 +57,7 @@ def _simple_stats(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return mean, std
 
 
+# pylint: disable=invalid-name
 # https://github.com/google/benchmark/blob/main/src/complexity.cc#L52-L69
 class BigO(enum.StrEnum):
     """Big o notation string identifiers."""

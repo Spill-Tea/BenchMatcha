@@ -53,7 +53,7 @@ def update_config_from_pyproject(path: str) -> None:
 
     for key, value in data.get("tool", {}).get("BenchMatcha", {}).items():
         if not hasattr(Config, key):
-            log.info(f"Unsupported tool key: {key}")
+            log.info("Unsupported tool key: %s", key)
             continue
 
         setattr(Config, key, value)
