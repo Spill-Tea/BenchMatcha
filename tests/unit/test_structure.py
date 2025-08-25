@@ -70,3 +70,26 @@ def test_parse_json_data(mock_data: str) -> None:
     assert result.json_schema_version == 1
 
     assert len(result.benchmarks) == 1
+
+
+def test_convert_BenchmarkContext_to_json(mock_data: str) -> None:
+    """Test we convert dataclass into dictionary json like objects."""
+    data = load(mock_data)
+    obj = structure.BenchmarkContext.from_json(data)
+    result = obj.to_json()
+    assert isinstance(result, dict), "Expected a dictionary object."
+
+    caches = result["caches"]
+    assert isinstance(caches, list)
+    assert all(isinstance(i, dict) for i in caches), (
+        "Expected cache instances to be dictionary objects."
+    )
+
+    benchmarks = result["benchmarks"]
+    assert isinstance(benchmarks, list)
+    assert all(isinstance(i, dict) for i in benchmarks), (
+        "Expected benchmark instances to be dictionary objects."
+    )
+    assert all(isinstance(k["complexity"], dict) for k in benchmarks), (
+        "Expected benchmark complexity instances to be dictionary objects."
+    )
