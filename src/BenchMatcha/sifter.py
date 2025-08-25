@@ -44,13 +44,33 @@ def scandir(filepath: str) -> Iterator[os.DirEntry[str]]:
         yield from scanner
 
 
+class Collector:
+    """Collection interface."""
+
+    root: str
+    pattern: str
+
+    def __init__(self, root: str, pattern: str = "bench*.py") -> None:
+        self.root = root
+        self.pattern = pattern
+
+    def get(self, path: str) -> Iterator[str]:
+        """Get paths of a given pattern."""
+        yield from glob.iglob(path, root_dir=self.root)
+
+    def collect(self, path: str) -> Iterator[str]:
+        """Recursive collection of pattern matching filepaths."""
+        yield from self.get(os.path.join(path, self.pattern))
+        for candidate in scandir(path):
+            if candidate.is_dir(follow_symlinks=False):
+                yield from self.collect(candidate.path)
+
+
 def collect(root: str, pattern: str = "bench*.py") -> Iterator[str]:
     """Collect relevant filepaths recursively stemming from root directory."""
-    yield from glob.iglob(os.path.join(root, pattern), root_dir=root)
+    col = Collector(root, pattern)
 
-    for candidate in scandir(root):
-        if candidate.is_dir(follow_symlinks=False):
-            yield from collect(candidate.path, pattern)
+    yield from col.collect(root)
 
 
 def load_benchmark(path: str, root: str) -> ModuleType:
