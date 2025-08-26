@@ -27,39 +27,31 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import subprocess
-import tempfile
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 
-import pytest
+import google_benchmark as gbench
 
 
-HERE: str = os.path.abspath(os.path.dirname(__file__))
+def register_complexity_analysis(
+    setup: Callable,
+    function: Callable,
+    minimum: int,
+    maximum: int,
+    step: int,
+    repeats: int,
+    *args,
+):
+    """Dynamically build complexity google benchmark wrapper."""
 
+    @gbench.register(name=f"{function.__module__}.{function.__qualname__}")
+    @gbench.option.repetitions(repeats)
+    @gbench.option.range_multiplier(step)
+    @gbench.option.range(minimum, maximum)
+    @gbench.option.complexity(gbench.oAuto)
+    def inner(state: gbench.State):
+        random_arg = setup(state.range(0))
+        while state:
+            function(random_arg, *args)
+        state.complexity_n = state.range(0)
 
-# NOTE: Coverage cannot be captured of a subprocess while changing the CWD, without
-#       use of the tool.coverage.run.patch argument setup to use `subprocess`. This was
-#       not introduced until V7.10.3. See the following for details:
-#       https://github.com/nedbat/coveragepy/issues/1499
-@pytest.fixture
-def benchmark() -> Iterator[Callable[[list[str]], tuple[int, str, str, str]]]:
-    """Benchmark entry point subprocess."""
-
-    with tempfile.TemporaryDirectory(dir=os.getcwd()) as cursor:
-
-        def inner(args: list[str]) -> tuple[int, str, str, str]:
-            response: subprocess.CompletedProcess[bytes] = subprocess.run(
-                ["benchmatcha", *args],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
-                cwd=cursor,
-                env=os.environ,
-            )
-            output: str = response.stdout.decode()
-            errors: str = response.stderr.decode()
-
-            return response.returncode, output, errors, cursor
-
-        yield inner
+    return inner

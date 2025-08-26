@@ -46,9 +46,10 @@ exclude = ["benchmarks", "docs", "tests"]
 benchmatcha = "BenchMatcha.runner:main"
 
 [project.optional-dependencies]
-dev = ["BenchMatcha[doc,test,lint,type]", "tox", "pre-commit"]
+dev = ["BenchMatcha[commit,doc,test,lint,type]"]
 doc = ["sphinx", "furo", "sphinx_multiversion"]
-test = ["pytest", "coverage", "pytest-xdist"]
+test = ["pytest", "coverage>=7.10.3", "pytest-xdist", "tox"]
+commit = ["pre-commit"]
 lint = ["pylint", "ruff"]
 type = ["mypy"]
 
@@ -59,6 +60,7 @@ addopts = "-n auto -rA"
 [tool.coverage.run]
 parallel = true
 branch = true
+patch = ["subprocess"]
 source = ["BenchMatcha"]
 disable_warnings = ["no-data-collected", "module-not-imported"]
 

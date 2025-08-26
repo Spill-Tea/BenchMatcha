@@ -27,39 +27,45 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""Integration test suite for cli runner entry point."""
+
 import os
-import subprocess
-import tempfile
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 
 import pytest
 
 
 HERE: str = os.path.abspath(os.path.dirname(__file__))
+DATA: str = os.path.join(HERE, "data")
 
 
-# NOTE: Coverage cannot be captured of a subprocess while changing the CWD, without
-#       use of the tool.coverage.run.patch argument setup to use `subprocess`. This was
-#       not introduced until V7.10.3. See the following for details:
-#       https://github.com/nedbat/coveragepy/issues/1499
-@pytest.fixture
-def benchmark() -> Iterator[Callable[[list[str]], tuple[int, str, str, str]]]:
-    """Benchmark entry point subprocess."""
+@pytest.mark.parametrize(
+    ["path"],
+    [
+        (os.path.join(DATA, "single"),),
+        (os.path.join(DATA, "handle_imports"),),
+    ],
+)
+def test_bench_directory(
+    path: str,
+    benchmark: Callable[[list[str]], tuple[int, str, str, str]],
+) -> None:
+    """Test benchmarking a directory of benchmark suites."""
+    status, out, error, tmpath = benchmark([path])
+    if len(error):
+        print(error)
 
-    with tempfile.TemporaryDirectory(dir=os.getcwd()) as cursor:
+    cache: str = os.path.join(tmpath, ".benchmatcha")
 
-        def inner(args: list[str]) -> tuple[int, str, str, str]:
-            response: subprocess.CompletedProcess[bytes] = subprocess.run(
-                ["benchmatcha", *args],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
-                cwd=cursor,
-                env=os.environ,
-            )
-            output: str = response.stdout.decode()
-            errors: str = response.stderr.decode()
+    assert os.path.exists(cache), "Expected cache directory to be created."
+    assert os.path.isdir(cache), "expected path to be a directory."
+    assert os.path.exists(os.path.join(cache, "out.html")), (
+        "expected figures to be generated."
+    )
 
-            return response.returncode, output, errors, cursor
-
-        yield inner
+    # NOTE: this output is temporary.
+    assert os.path.exists(os.path.join(cache, "benchmark.json")), (
+        "expected data to be saved."
+    )
+    assert status == 0, "Expected no errors."
+    assert len(error) == 0, "Expected no errors"

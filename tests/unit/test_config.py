@@ -71,6 +71,7 @@ def reset(c: type[config.Config]):
 
     for k, v in default.items():
         setattr(c, k, v)
+        assert getattr(c, k) == default[k], f"Expected Value to be reset: {k}"
 
 
 def test_config_load(toml_str: str, toml_data: dict) -> None:
