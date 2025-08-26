@@ -3,22 +3,32 @@ requires = ["setuptools>=67.6.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "PyTemplate"
+name = "BenchMatcha"
 authors = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
 maintainers = [{ name = "Jason C Del Rio", email = "spillthetea917@gmail.com" }]
-description = "Project description here."
+description = "Google Benchmark Suite Runner and Regression Analyzer."
 license = { file = "LICENSE" }
-requires-python = ">=3.7"
-keywords = ["keyword1", "keyword2"]
-classifiers = ["Programming Language :: Python :: 3"]
+requires-python = ">=3.11"
+keywords = ["benchmark", "regression", "analysis"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Development Status :: 1 - Planning",
+  "License :: OSI Approved :: BSD License",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Topic :: Utilities",
+  "Topic :: System :: Benchmark",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Software Development :: Libraries",
+]
 dynamic = ["version", "readme", "dependencies"]
 
 [project.urls]
-homepage = "https://github.com/Spill-Tea/PyTemplate"
-issues = "https://github.com/Spill-Tea/PyTemplate/issues"
+homepage = "https://github.com/Spill-Tea/BenchMatcha"
+issues = "https://github.com/Spill-Tea/BenchMatcha/issues"
 
 [tool.setuptools.dynamic]
-version = { attr = "PyTemplate.__version__" }
+version = { attr = "BenchMatcha.__version__" }
 readme = { file = ["README.md"], content-type = "text/markdown" }
 dependencies = { file = ["requirements.txt"] }
 
@@ -32,10 +42,14 @@ exclude = ["benchmarks", "docs", "tests"]
 [tool.setuptools.package-data]
 "*" = ["py.typed", "*.pyi"]
 
+[project.scripts]
+benchmatcha = "BenchMatcha.runner:main"
+
 [project.optional-dependencies]
-dev = ["PyTemplate[doc,test,lint,type]", "tox", "pre-commit"]
+dev = ["BenchMatcha[commit,doc,test,lint,type]"]
 doc = ["sphinx", "furo", "sphinx_multiversion"]
-test = ["pytest", "coverage", "pytest-xdist"]
+test = ["pytest", "coverage>=7.10.3", "pytest-xdist", "tox"]
+commit = ["pre-commit"]
 lint = ["pylint", "ruff"]
 type = ["mypy"]
 
@@ -46,7 +60,8 @@ addopts = "-n auto -rA"
 [tool.coverage.run]
 parallel = true
 branch = true
-source = ["PyTemplate"]
+patch = ["subprocess"]
+source = ["BenchMatcha"]
 disable_warnings = ["no-data-collected", "module-not-imported"]
 
 [tool.coverage.paths]
@@ -57,17 +72,15 @@ fail_under = 95.0
 precision = 1
 show_missing = true
 skip_empty = true
-# skip_covered = true
 exclude_also = ["def __repr__", 'if __name__ == "__main__"']
 
 [tool.mypy]
-mypy_path = "PyTemplate"
-warn_unused_ignores = true
+mypy_path = "BenchMatcha"
 allow_redefinition = false
-force_uppercase_builtins = true
+warn_unused_ignores = true
 
 [tool.pylint.main]
-# extension-pkg-whitelist = []
+extension-pkg-allow-list = ["orjson"]
 ignore = ["tests", "dist", "build"]
 fail-under = 9.0
 jobs = 0
@@ -89,6 +102,9 @@ max-line-length = 88
 [tool.pylint."messages control"]
 disable = [
   "R1731", # consider-using-max-builtin
+  "R0903", # too-few-public-methods
+  "R1735", # use-dict-literal
+  "W1514", # unspecified-encoding
 ]
 
 [tool.pylint."*.pyi"]

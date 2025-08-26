@@ -27,39 +27,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import subprocess
-import tempfile
-from collections.abc import Callable, Iterator
+"""unit test runner module."""
 
 import pytest
 
+from BenchMatcha import runner
 
-HERE: str = os.path.abspath(os.path.dirname(__file__))
 
+def test_manage_registration_file_not_found_error():
+    """Confirm invalid files raise correct error."""
+    with pytest.raises(FileNotFoundError) as err:
+        runner.manage_registration("cthulu")
 
-# NOTE: Coverage cannot be captured of a subprocess while changing the CWD, without
-#       use of the tool.coverage.run.patch argument setup to use `subprocess`. This was
-#       not introduced until V7.10.3. See the following for details:
-#       https://github.com/nedbat/coveragepy/issues/1499
-@pytest.fixture
-def benchmark() -> Iterator[Callable[[list[str]], tuple[int, str, str, str]]]:
-    """Benchmark entry point subprocess."""
-
-    with tempfile.TemporaryDirectory(dir=os.getcwd()) as cursor:
-
-        def inner(args: list[str]) -> tuple[int, str, str, str]:
-            response: subprocess.CompletedProcess[bytes] = subprocess.run(
-                ["benchmatcha", *args],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
-                cwd=cursor,
-                env=os.environ,
-            )
-            output: str = response.stdout.decode()
-            errors: str = response.stderr.decode()
-
-            return response.returncode, output, errors, cursor
-
-        yield inner
+    assert err.type is FileNotFoundError

@@ -27,39 +27,18 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import subprocess
-import tempfile
-from collections.abc import Callable, Iterator
-
-import pytest
+from .utils import register_complexity_analysis
 
 
-HERE: str = os.path.abspath(os.path.dirname(__file__))
+def multiply(a: float) -> float:
+    return a * 25.0
 
 
-# NOTE: Coverage cannot be captured of a subprocess while changing the CWD, without
-#       use of the tool.coverage.run.patch argument setup to use `subprocess`. This was
-#       not introduced until V7.10.3. See the following for details:
-#       https://github.com/nedbat/coveragepy/issues/1499
-@pytest.fixture
-def benchmark() -> Iterator[Callable[[list[str]], tuple[int, str, str, str]]]:
-    """Benchmark entry point subprocess."""
-
-    with tempfile.TemporaryDirectory(dir=os.getcwd()) as cursor:
-
-        def inner(args: list[str]) -> tuple[int, str, str, str]:
-            response: subprocess.CompletedProcess[bytes] = subprocess.run(
-                ["benchmatcha", *args],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
-                cwd=cursor,
-                env=os.environ,
-            )
-            output: str = response.stdout.decode()
-            errors: str = response.stderr.decode()
-
-            return response.returncode, output, errors, cursor
-
-        yield inner
+register_complexity_analysis(
+    lambda x: x,
+    multiply,
+    2,
+    8,
+    2,
+    2,
+)

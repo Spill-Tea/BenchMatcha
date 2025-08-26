@@ -29,7 +29,7 @@
 
 """Example unit tests."""
 
-from PyTemplate import __version__
+from BenchMatcha import __version__
 
 
 def test_version_type():

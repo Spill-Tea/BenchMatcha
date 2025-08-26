@@ -27,6 +27,31 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""PyTemplate Project."""
+from collections.abc import Callable
 
-__version__: str = "v0.0.1"
+import google_benchmark as gbench
+
+
+def register_complexity_analysis(
+    setup: Callable,
+    function: Callable,
+    minimum: int,
+    maximum: int,
+    step: int,
+    repeats: int,
+    *args,
+):
+    """Dynamically build complexity google benchmark wrapper."""
+
+    @gbench.register(name=f"{function.__module__}.{function.__qualname__}")
+    @gbench.option.repetitions(repeats)
+    @gbench.option.range_multiplier(step)
+    @gbench.option.range(minimum, maximum)
+    @gbench.option.complexity(gbench.oAuto)
+    def inner(state: gbench.State):
+        random_arg = setup(state.range(0))
+        while state:
+            function(random_arg, *args)
+        state.complexity_n = state.range(0)
+
+    return inner

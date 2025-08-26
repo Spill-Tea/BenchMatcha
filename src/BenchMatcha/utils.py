@@ -27,39 +27,55 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
-import subprocess
-import tempfile
-from collections.abc import Callable, Iterator
+"""Miscellaneous utilities."""
 
-import pytest
+from __future__ import annotations
+
+import enum
+import sys
+
+import numpy as np
 
 
-HERE: str = os.path.abspath(os.path.dirname(__file__))
+def power_of_2(x: int) -> int:
+    """Retrieve the next power of 2, if value is not already one."""
+    x -= 1
+    mod: int = 1
+    size: int = sys.getsizeof(x)
+    while mod < size:
+        x |= x >> mod
+        mod *= 2
+
+    return x + 1
 
 
-# NOTE: Coverage cannot be captured of a subprocess while changing the CWD, without
-#       use of the tool.coverage.run.patch argument setup to use `subprocess`. This was
-#       not introduced until V7.10.3. See the following for details:
-#       https://github.com/nedbat/coveragepy/issues/1499
-@pytest.fixture
-def benchmark() -> Iterator[Callable[[list[str]], tuple[int, str, str, str]]]:
-    """Benchmark entry point subprocess."""
+def _simple_stats(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Compute mean and standard deviation."""
+    mean: np.ndarray = np.nanmean(x, axis=1)
+    std: np.ndarray = np.nanstd(x, axis=1, ddof=1)
 
-    with tempfile.TemporaryDirectory(dir=os.getcwd()) as cursor:
+    return mean, std
 
-        def inner(args: list[str]) -> tuple[int, str, str, str]:
-            response: subprocess.CompletedProcess[bytes] = subprocess.run(
-                ["benchmatcha", *args],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
-                cwd=cursor,
-                env=os.environ,
-            )
-            output: str = response.stdout.decode()
-            errors: str = response.stderr.decode()
 
-            return response.returncode, output, errors, cursor
+# pylint: disable=invalid-name
+# https://github.com/google/benchmark/blob/main/src/complexity.cc#L52-L69
+class BigO(enum.StrEnum):
+    """Big o notation string identifiers."""
 
-        yield inner
+    o1 = "(1)"
+    oN = "N"
+    oNSquared = "N^2"
+    oNCubed = "N^3"
+    oLogN = "lgN"
+    oNLogN = "NlgN"
+    oLambda = "f(N)"
+
+    @classmethod
+    def get(cls, value: str) -> str:
+        # e.g. "o1" -> "(1)"
+        return cls[value].value
+
+    @classmethod
+    def back(cls, value: str) -> str:
+        # e.g. "(1)" -> "o1"
+        return cls(value).name
