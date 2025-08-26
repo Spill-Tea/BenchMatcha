@@ -29,12 +29,27 @@
 
 """Unit test structure module."""
 
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 
 import pytest
 
-from BenchMatcha import structure
+from BenchMatcha import errors, structure
 from BenchMatcha.handlers import load
+
+
+@pytest.fixture
+def shunt_version() -> Iterator[Callable[[tuple[int, ...]], tuple[int, ...]]]:
+    previous = structure.SUPPORTED_VERSIONS
+
+    def modify(value: tuple[int, ...]) -> tuple[int, ...]:
+        structure.SUPPORTED_VERSIONS = value
+        return value
+
+    yield modify
+
+    structure.SUPPORTED_VERSIONS = previous
+    assert structure.SUPPORTED_VERSIONS == previous
 
 
 @pytest.mark.parametrize(
@@ -93,3 +108,23 @@ def test_convert_BenchmarkContext_to_json(mock_data: str) -> None:
     assert all(isinstance(k["complexity"], dict) for k in benchmarks), (
         "Expected benchmark complexity instances to be dictionary objects."
     )
+
+
+def test_unavailable_version() -> None:
+    """Confirm SchemaError is raised when unavailable version is passed."""
+    record: dict = {"context": {"json_schema_version": -10}}
+    with pytest.raises(errors.SchemaError) as err:
+        structure.parse_version(record)
+
+    assert err.type is errors.SchemaError, "Expected to raise a SchemaError."
+
+
+def test_unsupported_version(shunt_version) -> None:
+    """Confirm SchemaError is raised when unsupported version is passed."""
+    shunt_version((-10,))
+
+    record: dict = {"context": {"json_schema_version": -10}}
+    with pytest.raises(errors.SchemaError) as err:
+        structure.parse_version(record)
+
+    assert err.type is errors.SchemaError, "Expected to raise a SchemaError."

@@ -50,6 +50,20 @@ def parse_datetime(x: str) -> datetime:
     return datetime.fromisoformat(x).astimezone(UTC)
 
 
+def _get_function(record: dict[str, str]) -> list[str]:
+    return record["name"].split("/")
+
+
+def get_function_name(record: dict[str, str]) -> str:
+    """Retrieve and parse function name."""
+    return _get_function(record)[0]
+
+
+def get_size(record: dict[str, str]) -> int:
+    """Get complexity size, n."""
+    return int(_get_function(record)[1])
+
+
 @dataclass
 class Cache:
     """System cache information.
@@ -107,9 +121,8 @@ class BenchmarkRecord:
     @classmethod
     def from_json(cls, record: dict[str, Any]) -> Self:
         """Convert dictionary object to BenchmarkRecord."""
-        parts: list[str] = record["name"].split("/")
-        function: str = parts[0]
-        size: int = int(parts[1])
+        function: str = get_function_name(record)
+        size: int = get_size(record)
 
         return cls(
             function=function,
@@ -120,9 +133,6 @@ class BenchmarkRecord:
             cpu_time=record["cpu_time"],
             time_unit=record["time_unit"],
         )
-
-    def to_json(self) -> dict:
-        return self.__dict__.copy()
 
 
 @dataclass
@@ -147,7 +157,7 @@ class ComplexityInfo:
     @classmethod
     def from_json(cls, record: dict[str, Any]) -> Self:
         """Convert dictionary object to ComplexityInfo."""
-        function: str = record["name"].split("/")[0]
+        function: str = get_function_name(record)
 
         return cls(
             function=function,
@@ -224,7 +234,7 @@ def get_complexity_info(data: list[dict[str, Any]]) -> dict[str, ComplexityInfo]
             or record.get("aggregate_name") != "RMS"
         ):
             continue
-        function: str = record["name"].split("/")[0]
+        function: str = get_function_name(record)
         if function in complexity_info:
             complexity_info[function].rms = record["rms"]
 
