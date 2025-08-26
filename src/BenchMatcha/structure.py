@@ -311,6 +311,7 @@ class BenchmarkContext:
     library_build_type: BuildType
     json_schema_version: int
     benchmarks: list[BenchmarkArray]
+    aslr_enabled: bool
 
     @classmethod
     def from_json(cls, record: dict[str, Any]) -> Self:
@@ -325,7 +326,16 @@ class BenchmarkContext:
             get_complexity_info(record["benchmarks"]),
         )
 
-        return cls(**context, caches=caches, date=date, benchmarks=benchmarks)
+        # NOTE: key found on linux machines (remote testing), but not encountered on mac
+        aslr = bool(context.pop("aslr_enabled", False))
+
+        return cls(
+            **{k: v for k, v in context.items() if k in cls.__annotations__},
+            caches=caches,
+            date=date,
+            benchmarks=benchmarks,
+            aslr_enabled=aslr,
+        )
 
     def to_json(self) -> dict:
         data = self.__dict__.copy()
