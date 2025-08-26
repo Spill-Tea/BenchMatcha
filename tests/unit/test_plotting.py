@@ -29,6 +29,8 @@
 
 """unit test plotting module."""
 
+import tempfile
+
 import numpy as np
 import plotly.graph_objs as go
 import pytest
@@ -36,24 +38,72 @@ import pytest
 from BenchMatcha import plotting
 
 
-def test_construct_log2_axis() -> None:
+def test_serialization_to_html():
+    """Confirm a plotly figure is saved to a html file."""
+    figure = go.Figure()
+
+    with tempfile.NamedTemporaryFile("w+") as file:
+        plotting.to_html(figure, file.name)
+        file.seek(0)
+        data: str = file.read(1024)
+
+    assert data.startswith("<div>"), "Expected html serialization."
+
+
+def test_serialization_to_json():
+    """Confirm a plotly figure is saved to a json file."""
+    figure = go.Figure()
+
+    with tempfile.NamedTemporaryFile("w+") as file:
+        plotting.to_json(figure, file.name)
+        file.seek(0)
+        data: str = file.read(1024)
+
+    assert data.startswith("{"), "Expected json serialization."
+
+
+@pytest.mark.parametrize(
+    ["x", "length", "vals", "labels"],
+    [
+        (
+            np.asarray([2, 256]),
+            9,
+            [1, 2, 4, 8, 16, 32, 64, 128, 256],
+            [
+                "2<sup>0</sup>",
+                "2<sup>1</sup>",
+                "2<sup>2</sup>",
+                "2<sup>3</sup>",
+                "2<sup>4</sup>",
+                "2<sup>5</sup>",
+                "2<sup>6</sup>",
+                "2<sup>7</sup>",
+                "2<sup>8</sup>",
+            ],
+        ),
+        (
+            np.asarray([4, 4]),
+            2,
+            [2, 4],
+            [
+                "2<sup>1</sup>",
+                "2<sup>2</sup>",
+            ],
+        ),
+    ],
+)
+def test_construct_log2_axis(
+    x: np.ndarray,
+    length: int,
+    vals: list[int],
+    labels: list[str],
+) -> None:
     """Confirm a log 2 axis is constructed correctly"""
-    x = np.asarray([2, 256])
     a, b = plotting.construct_log2_axis(x)
 
-    assert len(a) == len(b) == 9
-    assert a == [1, 2, 4, 8, 16, 32, 64, 128, 256], "Incorrect values"
-    assert b == [
-        "2<sup>0</sup>",
-        "2<sup>1</sup>",
-        "2<sup>2</sup>",
-        "2<sup>3</sup>",
-        "2<sup>4</sup>",
-        "2<sup>5</sup>",
-        "2<sup>6</sup>",
-        "2<sup>7</sup>",
-        "2<sup>8</sup>",
-    ], "Incorrect plotly labels."
+    assert len(a) == len(b) == length
+    assert a == vals, "Incorrect values"
+    assert b == labels, "Incorrect plotly labels."
 
 
 def test_create_scatter_trace() -> None:
