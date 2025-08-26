@@ -39,24 +39,7 @@ HERE: str = os.path.abspath(os.path.dirname(__file__))
 DATA: str = os.path.join(HERE, "data")
 
 
-@pytest.mark.parametrize(
-    ["path"],
-    [
-        (os.path.join(DATA, "single"),),
-        (os.path.join(DATA, "handle_imports"),),
-    ],
-)
-def test_bench_directory(
-    path: str,
-    benchmark: Callable[[list[str]], tuple[int, str, str, str]],
-) -> None:
-    """Test benchmarking a directory of benchmark suites."""
-    status, out, error, tmpath = benchmark([path])
-    if len(error):
-        print(error)
-
-    cache: str = os.path.join(tmpath, ".benchmatcha")
-
+def _assert_cache_created(cache: str, status: int, error: str) -> None:
     assert os.path.exists(cache), "Expected cache directory to be created."
     assert os.path.isdir(cache), "expected path to be a directory."
     assert os.path.exists(os.path.join(cache, "out.html")), (
@@ -69,3 +52,37 @@ def test_bench_directory(
     )
     assert status == 0, "Expected no errors."
     assert len(error) == 0, "Expected no errors"
+
+
+@pytest.mark.parametrize(
+    ["path"],
+    [
+        (os.path.join(DATA, "single"),),  # Directory with single file
+        (os.path.join(DATA, "single", "bench_a.py"),),  # single file
+        (
+            os.path.join(DATA, "handle_imports"),
+        ),  # Directory with file that imports locally
+    ],
+)
+def test_bench_directory(
+    path: str,
+    benchmark: Callable[[list[str]], tuple[int, str, str, str]],
+) -> None:
+    """Test benchmarking a directory of benchmark suites."""
+    status, out, error, tmpath = benchmark([path])
+    if len(error):
+        print(error)
+
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status, error)
+
+
+def test_json_key_val(benchmark) -> None:
+    """Confirm including benchmark format proceeds normally."""
+    path: str = os.path.join(DATA, "single")
+    status, out, error, tmpath = benchmark(["--benchmark_format=json", path])
+    if len(error):
+        print(error)
+
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status, error)
