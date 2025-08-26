@@ -29,6 +29,7 @@
 
 """Test json data handlers module."""
 
+import tempfile
 from collections.abc import Callable
 from io import BytesIO, StringIO
 from typing import IO, Any
@@ -68,6 +69,14 @@ def test_handlers(
 
     if isinstance(mock, (StringIO, BytesIO)):
         mock.close()
+
+
+def test_stream_type_error():
+    """Confirm a type error is raised when an unreadable stream is provided."""
+    with pytest.raises(TypeError) as err, tempfile.NamedTemporaryFile("w") as file:
+        handlers.HandleIO(file)
+
+    assert err.type is TypeError, "Expected a TypeError to be raised."
 
 
 @pytest.mark.parametrize(

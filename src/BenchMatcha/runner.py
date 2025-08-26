@@ -133,8 +133,8 @@ def _run() -> BenchmarkContext:
     if "--benchmark_format=json" not in sys.argv:
         sys.argv.append("--benchmark_format=json")
 
-    # TODO: create python bindings of library to call and collect json data without
-    #       serializing and capturing stdout.
+    # TODO: create python bindings of google_benchmark library to call and collect json
+    #       data without serializing and capturing stdout.
     # Read this excellent blog regarding redirecting stdout from c libraries:
     # https://eli.thegreenplace.net/2015/redirecting-all-kinds-of-stdout-in-python/
     with pipes() as (stdout, stderr):
@@ -207,7 +207,7 @@ def main() -> None:
     # TODO: support specification of config file path from CLI, to overwrite default
     # TODO: Support command line args to overwrite default config.
     cwd: str = os.getcwd()
-    p = os.path.join(cwd, ".pyproject.toml")
+    p = os.path.join(cwd, "pyproject.toml")
     if os.path.exists(p):
         update_config_from_pyproject(p)
 
