@@ -47,6 +47,7 @@ class MockDirEntry:
         self.directory = directory
 
     def is_dir(self, **kwargs) -> bool:
+        """Confirm if path is a directory."""
         return self.directory
 
     def __str__(self):

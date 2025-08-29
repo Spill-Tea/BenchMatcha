@@ -40,6 +40,7 @@ from BenchMatcha import config
 
 @pytest.fixture
 def toml_str() -> str:
+    """Mock toml config text."""
     return """
 [tool.BenchMatcha]
 color="#FFF"
@@ -51,6 +52,7 @@ upsupported_key="test"
 
 @pytest.fixture
 def toml_data() -> dict:
+    """Mock toml config as a dictionary object."""
     return {
         "tool": {
             "BenchMatcha": {

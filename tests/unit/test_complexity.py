@@ -40,6 +40,7 @@ from BenchMatcha.utils import _simple_stats
 
 @pytest.fixture
 def fit_result() -> comp.FitResult:
+    """Sample Fit Result."""
     return comp.FitResult(
         bigo="N",
         params=np.asarray([2.73]),
@@ -50,6 +51,7 @@ def fit_result() -> comp.FitResult:
 
 @pytest.fixture
 def coords() -> tuple[np.ndarray, np.ndarray]:
+    """Mock coordinates."""
     x = np.arange(3)
     y = np.arange(9).reshape((3, 3))
 
@@ -58,6 +60,8 @@ def coords() -> tuple[np.ndarray, np.ndarray]:
 
 @pytest.fixture
 def shunt_fit() -> Iterator[None]:
+    """Temporarily add a complexity function that fails, and removing on teardown."""
+
     def _failed_fit(x, a, b):
         raise RuntimeError("Intentionally Fail.")
 

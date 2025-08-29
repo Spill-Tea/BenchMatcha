@@ -50,7 +50,7 @@ def test_load(mock_data: str) -> None:
     [
         (handlers.HandlePath, lambda x: x),
         (handlers.HandleBytes, lambda x: x.encode()),
-        (handlers.HandleIO, lambda x: StringIO(x)),
+        (handlers.HandleIO, StringIO),
         (handlers.HandleIO, lambda x: BytesIO(x.encode())),
     ],
 )
@@ -59,7 +59,7 @@ def test_handlers(
     transformer: Callable[[str], Any],
     mock_data: str,
 ) -> None:
-    """"""
+    """Test handlers correctly parse mock json data."""
     mock = transformer(mock_data)
     result = handler(mock).handle()
     assert isinstance(result, dict), "Expected a dictionary loaded."

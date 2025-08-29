@@ -40,6 +40,7 @@ from BenchMatcha.handlers import load
 
 @pytest.fixture
 def shunt_version() -> Iterator[Callable[[tuple[int, ...]], tuple[int, ...]]]:
+    """Temporarily modify supported versions, with teardown to reinstate original."""
     previous = structure.SUPPORTED_VERSIONS
 
     def modify(value: tuple[int, ...]) -> tuple[int, ...]:
@@ -87,7 +88,7 @@ def test_parse_json_data(mock_data: str) -> None:
     assert len(result.benchmarks) == 1
 
 
-def test_convert_BenchmarkContext_to_json(mock_data: str) -> None:
+def test_convert_benchmark_context_to_json(mock_data: str) -> None:
     """Test we convert dataclass into dictionary json like objects."""
     data = load(mock_data)
     obj = structure.BenchmarkContext.from_json(data)
