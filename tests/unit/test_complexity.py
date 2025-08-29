@@ -29,6 +29,8 @@
 
 """Test algorithmic complexity module."""
 
+from collections.abc import Iterator
+
 import numpy as np
 import pytest
 
@@ -52,6 +54,18 @@ def coords() -> tuple[np.ndarray, np.ndarray]:
     y = np.arange(9).reshape((3, 3))
 
     return x, y
+
+
+@pytest.fixture
+def shunt_fit() -> Iterator[None]:
+    def _failed_fit(x, a, b):
+        raise RuntimeError("Intentionally Fail.")
+
+    comp.complexity_functions["runtime_error"] = _failed_fit
+
+    yield
+
+    comp.complexity_functions.pop("runtime_error")
 
 
 def test_fit_result_repr(fit_result: comp.FitResult) -> None:
@@ -103,7 +117,7 @@ def test_fit(coords: tuple[np.ndarray, np.ndarray]) -> None:
     assert np.isclose(result.rms, 0.0), "Unexpected error."
 
 
-def test_analyze_complexity() -> None:
+def test_analyze_complexity(shunt_fit) -> None:
     """Test batch analysis of algorithmic complexity."""
     x = np.arange(10, 20)
     y = np.arange(1, 31).reshape(10, 3)
