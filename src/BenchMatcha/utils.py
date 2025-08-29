@@ -72,10 +72,12 @@ class BigO(enum.StrEnum):
 
     @classmethod
     def get(cls, value: str) -> str:
+        """Get value from key string."""
         # e.g. "o1" -> "(1)"
         return cls[value].value
 
     @classmethod
     def back(cls, value: str) -> str:
+        """Get key string from value."""
         # e.g. "(1)" -> "o1"
         return cls(value).name
