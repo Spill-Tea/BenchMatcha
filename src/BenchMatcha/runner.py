@@ -29,6 +29,7 @@
 
 """Primary Benchmark Runner."""
 
+import argparse
 import logging
 import os
 import sys
@@ -40,6 +41,8 @@ import plotly.graph_objs as go  # type: ignore[import-untyped]
 from wurlitzer import pipes  # type: ignore[import-untyped]
 
 from . import plotting
+
+# from .complexity import analyze_complexity
 from .config import Config, update_config_from_pyproject
 from .errors import ParsingError
 from .handlers import HandleText
@@ -53,6 +56,7 @@ log: logging.Logger = logging.getLogger(__name__)
 def manage_registration(path: str) -> None:
     """Manage import, depending on whether path is a directory or file."""
     abspath: str = os.path.abspath(path)
+    log.debug("Loading path: %s", abspath)
     if not os.path.exists(abspath):
         raise FileNotFoundError("Invalid filepath")
 
@@ -65,8 +69,10 @@ def manage_registration(path: str) -> None:
     else:
         log.warning(
             "Unsupported path provided. While the path does exist, it is neither a"
-            " file nor a directory."
+            " python file nor a directory: %s",
+            abspath,
         )
+        raise TypeError(f"Unsupported path type: {abspath}")
 
 
 def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
@@ -99,7 +105,7 @@ def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
     )
 
     vals, labels = plotting.construct_log2_axis(benchmark.size)
-    if (p := len(vals) // 13) > 0:
+    if (p := len(vals) // Config.x_axis) > 0:
         vals = vals[:: p + 1]
         labels = labels[:: p + 1]
 
@@ -128,8 +134,8 @@ def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
     return fig
 
 
+# TODO: Consider defining CLI Exit Status in an Enum
 def _run() -> BenchmarkContext:
-    # TODO: Improve logic here
     if "--benchmark_format=json" not in sys.argv:
         sys.argv.append("--benchmark_format=json")
 
@@ -146,7 +152,12 @@ def _run() -> BenchmarkContext:
             ...
 
     text: str = stdout.read()
+    error: str = stderr.read()
     stdout.close(), stderr.close()  # pylint: disable=W0106
+
+    # Pass stdout from google_benchmark
+    if len(error):
+        log.error(error)
 
     handler = HandleText(text)
     try:
@@ -182,39 +193,147 @@ def save(context: BenchmarkContext, cache_dir: str) -> None:
         f.write(serialized)
 
 
-def run(path: str, cache_dir: str) -> None:
+def run(cache_dir: str) -> None:
     """BenchMatcha Runner."""
-    manage_registration(path)
-
-    # TODO: remove arguments specific to BenchMatch to prevent failure on google
-    #       benchmark interface.
-
     context: BenchmarkContext = _run()
+
+    # TODO: Capture re-analyzed complexity information. Determine where to store, or
+    #       how to present this information in a manner that is useful.
+    # for bench in context.benchmarks:
+    #     analyze_complexity(bench.size, bench.real_time)
+
     save(context, cache_dir)
 
 
-# TODO: Handle a list of separated filepaths.
-# def run_paths(paths: list[str]) -> None:
-#     """Run benchmarks against a list of paths."""
-#     for path in paths:
-#         manage_registration(path)
+def get_args() -> argparse.Namespace:
+    """Get BenchMatcha command line arguments and reset to support google_benchmark."""
+    args = argparse.ArgumentParser("benchmatcha", conflict_handler="error")
+    args.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Set Logging Level to DEBUG.",
+        required=False,
+    )
+    args.add_argument(
+        "-c",
+        "--color",
+        default=None,
+        help="Scatterplot marker color.",
+        required=False,
+    )
+    args.add_argument(
+        "-l",
+        "--line-color",
+        default=None,
+        help="Scatterplot complexity fit line color.",
+        required=False,
+    )
+    args.add_argument(
+        "-x",
+        "--x-axis",
+        default=None,
+        help="Maximum Number of units displayed on x-axis.",
+        required=False,
+        type=int,
+    )
 
-#     context: BenchmarkContext = _run()
+    cwd: str = os.getcwd()
+    args.add_argument(
+        "--config",
+        default=os.path.join(cwd, "pyproject.toml"),
+        help="Path location of pyproject.toml configuration file. "
+        "Defaults to Current Working Directory.",
+    )
+    args.add_argument(
+        "--cache",
+        default=os.path.join(cwd, ".benchmatcha"),
+        help="Path location of cache directory. Defaults to Current Working Directory.",
+    )
+    args.add_argument(
+        "--path",
+        action="extend",
+        nargs="+",
+        help="Valid file or directory path to benchmarks.",
+    )
+
+    # Capture anything that doesn't fit (to be fed downstream to google_benchmark cli)
+    args.add_argument("others", nargs=argparse.REMAINDER)
+
+    # TODO: Plotting over time (pulling from database)
+    # sub = args.add_subparsers()
+    # plot = sub.add_parser("plot")
+    # plot.add_argument(
+    #     "--min-date",
+    #     default=None,
+    #     help="Filter data after minimum date (inclusive).",
+    # )
+    # plot.add_argument(
+    #     "--max-date",
+    #     default=None,
+    #     help="Filter data before date (inclusive).",
+    # )
+    # plot.add_argument("--host", default=None, help="Filter data by specific host.")
+    # plot.add_argument("--os", default=None, help="Filter data by specific OS type.")
+    # plot.add_argument(
+    #     "--function",
+    #     default=None,
+    #     help="Filter data to present a specific function name.",
+    # )
+    known, unknown = args.parse_known_args()
+
+    # NOTE: Only validate `benchmark_format` argument from google_benchmark cli, since
+    #       we require json format to correctly work downstream. All other argument
+    #       validations should be handled by google_benchmark cli parsing directly.
+    problems: list[str] = []
+    for k in filter(
+        lambda x: isinstance(x, str) and "--benchmark_format=" in x,
+        unknown,
+    ):
+        if "json" not in k:
+            log.warning("Benchmark Format must be json: `%s`", k)
+            problems.append(k)
+    for p in problems:
+        unknown.remove(p)
+
+    # Prune / Reset for google_benchmark
+    sys.argv = [sys.argv[0], *unknown, *known.others]
+
+    return known
 
 
 def main() -> None:
     """Primary CLI Entry Point."""
-    # TODO: support specification of config file path from CLI, to overwrite default
-    # TODO: Support command line args to overwrite default config.
-    cwd: str = os.getcwd()
-    p = os.path.join(cwd, "pyproject.toml")
-    if os.path.exists(p):
-        update_config_from_pyproject(p)
+    args: argparse.Namespace = get_args()
 
-    # Create cache if does not exist
-    cache = os.path.join(cwd, ".benchmatcha")
-    if not os.path.exists(cache):
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+        log.setLevel(logging.DEBUG)
+
+    if os.path.exists(args.config):
+        log.debug("Updating default configuration from file: %s", args.config)
+        update_config_from_pyproject(args.config)
+
+    # NOTE: Configuration Args should overwrite values set in config file
+    if args.color is not None:
+        log.debug("Overriding color from arg: %s", args.color)
+        Config.color = args.color
+
+    if args.line_color is not None:
+        log.debug("Overriding line_color from arg: %s", args.line_color)
+        Config.line_color = args.line_color
+
+    if args.x_axis is not None:
+        log.debug("Overriding x_axis from arg: %s", args.x_axis)
+        Config.x_axis = args.x_axis
+
+    # Create cache directory if it does not exist
+    if not os.path.exists(cache := args.cache):
+        log.debug("Creating cache directory at: %s", cache)
         os.mkdir(cache)
 
-    # TODO: Determine if a list of paths have been provided instead, and handle
-    run(sys.argv.pop(), cache)
+    # Natively handle multiple provided paths
+    for path in args.path:
+        manage_registration(path)
+
+    run(cache)

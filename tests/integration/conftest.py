@@ -43,12 +43,19 @@ HERE: str = os.path.abspath(os.path.dirname(__file__))
 #       not introduced until V7.10.3. See the following for details:
 #       https://github.com/nedbat/coveragepy/issues/1499
 @pytest.fixture
-def benchmark() -> Iterator[Callable[[list[str]], tuple[int, str, str, str]]]:
+def benchmark() -> Iterator[
+    Callable[[list[str], Callable[[str], None] | None], tuple[int, str, str, str]]
+]:
     """Benchmark entry point subprocess."""
+    with tempfile.TemporaryDirectory(dir=HERE) as cursor:
 
-    with tempfile.TemporaryDirectory(dir=os.getcwd()) as cursor:
+        def inner(
+            args: list[str],
+            setup: Callable[[str], None] | None = None,
+        ) -> tuple[int, str, str, str]:
+            if setup is not None and callable(setup):
+                setup(cursor)
 
-        def inner(args: list[str]) -> tuple[int, str, str, str]:
             response: subprocess.CompletedProcess[bytes] = subprocess.run(
                 ["benchmatcha", *args],
                 stdout=subprocess.PIPE,
