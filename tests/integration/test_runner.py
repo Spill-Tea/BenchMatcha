@@ -120,16 +120,23 @@ def test_empty_pyproject_config_file(
         ("--color", "red"),
         ("--line-color", "black"),
         ("--x-axis", "2"),
+        ("--verbose", None),
     ],
 )
 def test_config_parameters(
     param: str,
-    value: str,
+    value: str | None,
     benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
 ) -> None:
     """Test available cli flags to modify configuration."""
     path: str = os.path.join(DATA, "single")
+    args: list[str] = ["--path", path, param]
+    if value is not None:
+        args.append(value)
 
-    status, out, error, tmpath = benchmark(["--path", path, param, value])
+    status, out, error, tmpath = benchmark(args)
     cache: str = os.path.join(tmpath, ".benchmatcha")
     _assert_cache_created(cache, status)
+
+    if param == "--verbose":
+        assert "DEBUG" in error, "Expected debug logging in stderr."
