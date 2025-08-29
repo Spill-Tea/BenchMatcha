@@ -39,7 +39,7 @@ HERE: str = os.path.abspath(os.path.dirname(__file__))
 DATA: str = os.path.join(HERE, "data")
 
 
-def _assert_cache_created(cache: str, status: int, error: str) -> None:
+def _assert_cache_created(cache: str, status: int) -> None:
     assert os.path.exists(cache), "Expected cache directory to be created."
     assert os.path.isdir(cache), "expected path to be a directory."
     assert os.path.exists(os.path.join(cache, "out.html")), (
@@ -51,7 +51,6 @@ def _assert_cache_created(cache: str, status: int, error: str) -> None:
         "expected data to be saved."
     )
     assert status == 0, "Expected no errors."
-    assert len(error) == 0, "Expected no errors"
 
 
 @pytest.mark.parametrize(
@@ -69,20 +68,111 @@ def test_bench_directory(
     benchmark: Callable[[list[str]], tuple[int, str, str, str]],
 ) -> None:
     """Test benchmarking a directory of benchmark suites."""
-    status, out, error, tmpath = benchmark([path])
-    if len(error):
-        print(error)
+    status, out, error, tmpath = benchmark(["--path", path])
 
     cache: str = os.path.join(tmpath, ".benchmatcha")
-    _assert_cache_created(cache, status, error)
+    _assert_cache_created(cache, status)
 
 
-def test_json_key_val(benchmark) -> None:
+@pytest.mark.parametrize(
+    ["form"],
+    [
+        ("--benchmark_format=json",),  # frivolously provide format
+        ("--benchmark_format=csv",),  # providing incorrect format is overridden
+    ],
+)
+def test_json_key_val(
+    form: str,
+    benchmark: Callable[[list[str]], tuple[int, str, str, str]],
+) -> None:
     """Confirm including benchmark format proceeds normally."""
     path: str = os.path.join(DATA, "single")
-    status, out, error, tmpath = benchmark(["--benchmark_format=json", path])
-    if len(error):
-        print(error)
+    status, out, error, tmpath = benchmark([form, "--path", path])
 
     cache: str = os.path.join(tmpath, ".benchmatcha")
-    _assert_cache_created(cache, status, error)
+    _assert_cache_created(cache, status)
+
+
+def _setup_pyproject(x: str) -> None:
+    p: str = os.path.join(x, "pyproject.toml")
+    with open(p, "w") as f:
+        ...
+
+
+def test_empty_pyproject_config_file(
+    benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
+) -> None:
+    """Perform run with empty pyproject config."""
+    path: str = os.path.join(DATA, "single")
+
+    status, out, error, tmpath = benchmark(["--path", path], _setup_pyproject)
+    assert os.path.exists(os.path.join(tmpath, "pyproject.toml")), (
+        "Expected pyproject config file to be setup."
+    )
+
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status)
+
+
+def _setup_cache(x: str) -> None:
+    p: str = os.path.join(x, ".benchmatcha")
+    os.mkdir(p)
+
+
+def test_when_cache_folder_already_exists(
+    benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
+) -> None:
+    """Perform run where cache already exists."""
+    path: str = os.path.join(DATA, "single")
+
+    status, out, error, tmpath = benchmark(["--path", path], _setup_cache)
+
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status)
+
+
+def _setup_db(x: str) -> None:
+    _setup_cache(x)
+    p: str = os.path.join(x, ".benchmatcha", "benchmark.json")
+    with open(p, "w") as f:
+        f.write("[]")
+
+
+def test_previous_db(
+    benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
+) -> None:
+    """Perform run where database already exists."""
+    path: str = os.path.join(DATA, "single")
+
+    status, out, error, tmpath = benchmark(["--path", path], _setup_db)
+
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status)
+
+
+@pytest.mark.parametrize(
+    ["param", "value"],
+    [
+        ("--color", "red"),
+        ("--line-color", "black"),
+        ("--x-axis", "2"),
+        ("--verbose", None),
+    ],
+)
+def test_config_parameters(
+    param: str,
+    value: str | None,
+    benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
+) -> None:
+    """Test available cli flags to modify configuration."""
+    path: str = os.path.join(DATA, "single")
+    args: list[str] = ["--path", path, param]
+    if value is not None:
+        args.append(value)
+
+    status, out, error, tmpath = benchmark(args)
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status)
+
+    if param == "--verbose":
+        assert "DEBUG" in error, "Expected debug logging in stderr."

@@ -92,6 +92,7 @@ class Cache:
         )
 
     def to_json(self) -> dict:
+        """Convert to json dictionary object."""
         return self.__dict__.copy()
 
 
@@ -167,6 +168,7 @@ class ComplexityInfo:
         )
 
     def to_json(self) -> dict:
+        """Convert to json dictionary object."""
         return self.__dict__.copy()
 
 
@@ -194,6 +196,7 @@ class BenchmarkArray:
     complexity: ComplexityInfo
 
     def to_json(self) -> dict:
+        """Convert to json dictionary object."""
         d = self.__dict__.copy()
         d["complexity"] = self.complexity.to_json()
 
@@ -338,6 +341,7 @@ class BenchmarkContext:
         )
 
     def to_json(self) -> dict:
+        """Convert to json dictionary object."""
         data = self.__dict__.copy()
         data["caches"] = [i.to_json() for i in self.caches]
         data["benchmarks"] = [j.to_json() for j in self.benchmarks]
