@@ -72,8 +72,8 @@ def construct_log2_axis(x: np.ndarray) -> tuple[list[int], list[str]]:
     minimum = int(x.min())
     maximum = power_of_2(int(x.max())) + 1
     current = power_of_2(minimum)
-    if 1 < current >= minimum:
-        current //= 2
+    if current >= minimum:
+        current = max(1, current // 2)
     power = int(np.log2(current))
 
     while current < maximum:
