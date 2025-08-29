@@ -119,7 +119,7 @@ def test_empty_pyproject_config_file(
     [
         ("--color", "red"),
         ("--line-color", "black"),
-        ("--x-axis", "5"),
+        ("--x-axis", "2"),
     ],
 )
 def test_config_parameters(
