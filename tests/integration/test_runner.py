@@ -93,7 +93,7 @@ def test_json_key_val(
     _assert_cache_created(cache, status)
 
 
-def _setup_pyproject(x: str):
+def _setup_pyproject(x: str) -> None:
     p: str = os.path.join(x, "pyproject.toml")
     with open(p, "w") as f:
         ...
@@ -109,6 +109,42 @@ def test_empty_pyproject_config_file(
     assert os.path.exists(os.path.join(tmpath, "pyproject.toml")), (
         "Expected pyproject config file to be setup."
     )
+
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status)
+
+
+def _setup_cache(x: str) -> None:
+    p: str = os.path.join(x, ".benchmatcha")
+    os.mkdir(p)
+
+
+def test_when_cache_folder_already_exists(
+    benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
+) -> None:
+    """Perform run where cache already exists."""
+    path: str = os.path.join(DATA, "single")
+
+    status, out, error, tmpath = benchmark(["--path", path], _setup_cache)
+
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status)
+
+
+def _setup_db(x: str) -> None:
+    _setup_cache(x)
+    p: str = os.path.join(x, ".benchmatcha", "benchmark.json")
+    with open(p, "w") as f:
+        f.write("[]")
+
+
+def test_previous_db(
+    benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
+) -> None:
+    """Perform run where database already exists."""
+    path: str = os.path.join(DATA, "single")
+
+    status, out, error, tmpath = benchmark(["--path", path], _setup_db)
 
     cache: str = os.path.join(tmpath, ".benchmatcha")
     _assert_cache_created(cache, status)
