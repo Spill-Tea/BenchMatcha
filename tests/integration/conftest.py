@@ -57,7 +57,7 @@ def benchmark() -> Iterator[
                 setup(cursor)
 
             response: subprocess.CompletedProcess[bytes] = subprocess.run(
-                ["benchmatcha", *args],
+                ["benchmatcha", "--benchmark_dry_run", *args],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 check=False,

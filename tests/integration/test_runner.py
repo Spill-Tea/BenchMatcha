@@ -112,3 +112,24 @@ def test_empty_pyproject_config_file(
 
     cache: str = os.path.join(tmpath, ".benchmatcha")
     _assert_cache_created(cache, status)
+
+
+@pytest.mark.parametrize(
+    ["param", "value"],
+    [
+        ("--color", "red"),
+        ("--line-color", "black"),
+        ("--x-axis", "5"),
+    ],
+)
+def test_config_parameters(
+    param: str,
+    value: str,
+    benchmark: Callable[[list[str], Callable[[str], None]], tuple[int, str, str, str]],
+) -> None:
+    """Test available cli flags to modify configuration."""
+    path: str = os.path.join(DATA, "single")
+
+    status, out, error, tmpath = benchmark(["--path", path, param, value])
+    cache: str = os.path.join(tmpath, ".benchmatcha")
+    _assert_cache_created(cache, status)
