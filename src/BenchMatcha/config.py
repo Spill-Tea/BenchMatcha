@@ -40,11 +40,20 @@ log: logging.Logger = logging.getLogger(__name__)
 
 
 class Config:
-    """default configuration."""
+    """default configuration.
+
+    Attributes:
+        color (str): plot marker color.
+        line_color (str): plot line color.
+        font (str): plot font family style.
+        x_axis (int): Maximum number of line ticks on x-axis.
+
+    """
 
     color: str = plotting.Prism[3]
     line_color: str = plotting.Prism[4]
     font: str = "Space Grotesk Light, Courier New, monospace"
+    x_axis: int = 13
 
 
 class ConfigUpdater:
@@ -92,6 +101,7 @@ def update_config_from_pyproject(path: str) -> None:
             color="#FFF"
             line_color="#333"
             font="Courier"
+            x_axis=5
 
     """
     cu = ConfigUpdater(path)
