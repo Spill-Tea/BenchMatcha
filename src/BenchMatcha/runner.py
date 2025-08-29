@@ -155,7 +155,7 @@ def _run() -> BenchmarkContext:
     error: str = stderr.read()
     stdout.close(), stderr.close()  # pylint: disable=W0106
 
-    # Pass stdout from google_benchmark
+    # Pass stderr from google_benchmark
     if len(error):
         log.error(error)
 
