@@ -31,6 +31,9 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -62,6 +65,28 @@ def get_function_name(record: dict[str, str]) -> str:
 def get_size(record: dict[str, str]) -> int:
     """Get complexity size, n."""
     return int(_get_function(record)[1])
+
+
+def get_python_version() -> str:
+    """Get current python version."""
+    version: tuple[str, str, str] = (
+        str(sys.version_info.major),
+        str(sys.version_info.minor),
+        str(sys.version_info.micro),
+    )
+
+    return ".".join(version)
+
+
+def _get_commit_hash(path: str) -> str:
+    return (
+        subprocess.check_output(
+            ["git", "describe", "HEAD", "--always"],
+            cwd=path,
+        )
+        .strip()
+        .decode()
+    )
 
 
 @dataclass
@@ -315,6 +340,8 @@ class BenchmarkContext:
     json_schema_version: int
     benchmarks: list[BenchmarkArray]
     aslr_enabled: bool
+    python_version: str
+    git_sha: str
 
     @classmethod
     def from_json(cls, record: dict[str, Any]) -> Self:
@@ -338,6 +365,8 @@ class BenchmarkContext:
             date=date,
             benchmarks=benchmarks,
             aslr_enabled=aslr,
+            python_version=get_python_version(),
+            git_sha=_get_commit_hash(os.getcwd()),
         )
 
     def to_json(self) -> dict:

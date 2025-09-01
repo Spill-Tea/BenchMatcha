@@ -285,6 +285,8 @@ def get_args() -> argparse.Namespace:
     # NOTE: Only validate `benchmark_format` argument from google_benchmark cli, since
     #       we require json format to correctly work downstream. All other argument
     #       validations should be handled by google_benchmark cli parsing directly.
+    # Google_benchmark CLI arguments, For Reference:
+    # https://github.com/google/benchmark/blob/main/src/benchmark.cc#L751-L812
     problems: list[str] = []
     for k in filter(
         lambda x: isinstance(x, str) and "--benchmark_format=" in x,
