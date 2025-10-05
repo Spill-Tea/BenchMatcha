@@ -320,8 +320,6 @@ def convert_to_arrays(
 
 
 # TODO: Consider how we would capture custom data (Counters).
-# TODO: Capture additional information not included in google_benchmark output
-#       (e.g. git sha)
 @dataclass
 class BenchmarkContext:
     """Google benchmark context."""
