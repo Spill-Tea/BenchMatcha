@@ -47,7 +47,10 @@ benchmatcha = "BenchMatcha.runner:main"
 
 [project.optional-dependencies]
 dev = ["BenchMatcha[commit,doc,test,lint,type]"]
-doc = ["sphinx", "furo", "sphinx_multiversion"]
+# NOTE: Sphinx v9.0.0 introduced several breaking changes, including
+#       incompatibility with Sphinx multiversion project, see:
+# https://github.com/sphinx-contrib/multiversion/issues/201
+doc = ["sphinx<9.0.0", "furo", "sphinx_multiversion"]
 test = ["pytest", "coverage>=7.10.3", "pytest-xdist", "tox"]
 commit = ["pre-commit"]
 lint = ["pylint", "ruff"]
