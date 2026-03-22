@@ -30,12 +30,16 @@
 """Discovery of benchmark tests to register."""
 
 import glob
+import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 
 from _pytest.pathlib import import_path
+
+
+log: logging.Logger = logging.getLogger(__name__)
 
 
 def scandir(filepath: str) -> Iterator[os.DirEntry[str]]:
@@ -87,3 +91,25 @@ def collect_benchmarks(root: str) -> None:
     root = os.path.abspath(root)
     for j in collect(root):
         load_benchmark(j, root=root)
+
+
+def manage_registration(path: str) -> None:
+    """Manage import, depending on whether path is a directory or file."""
+    abspath: str = os.path.abspath(path)
+    log.debug("Loading path: %s", abspath)
+    if not os.path.exists(abspath):
+        raise FileNotFoundError(f"Invalid filepath: {abspath}")
+
+    if os.path.isdir(abspath):
+        collect_benchmarks(abspath)
+
+    elif os.path.isfile(abspath) and abspath.endswith(".py"):
+        load_benchmark(abspath, os.path.abspath(os.path.dirname(abspath)))
+
+    else:
+        log.warning(
+            "Unsupported path provided. While the path does exist, it is neither a"
+            " python file nor a directory: %s",
+            abspath,
+        )
+        raise TypeError(f"Unsupported path type: {abspath}")

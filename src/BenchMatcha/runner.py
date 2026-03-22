@@ -43,39 +43,17 @@ from wurlitzer import pipes  # type: ignore[import-untyped]
 from . import plotting
 
 # from .complexity import analyze_complexity
-from .config import Config, update_config_from_pyproject
+from .config import ConfigBase, update_config_from_pyproject
 from .errors import ParsingError
 from .handlers import HandleText
-from .sifter import collect_benchmarks, load_benchmark
+from .sifter import manage_registration
 from .structure import BenchmarkArray, BenchmarkContext, parse_version
 
 
 log: logging.Logger = logging.getLogger(__name__)
 
 
-def manage_registration(path: str) -> None:
-    """Manage import, depending on whether path is a directory or file."""
-    abspath: str = os.path.abspath(path)
-    log.debug("Loading path: %s", abspath)
-    if not os.path.exists(abspath):
-        raise FileNotFoundError("Invalid filepath")
-
-    if os.path.isdir(abspath):
-        collect_benchmarks(abspath)
-
-    elif os.path.isfile(abspath) and abspath.endswith(".py"):
-        load_benchmark(abspath, os.path.abspath(os.path.dirname(abspath)))
-
-    else:
-        log.warning(
-            "Unsupported path provided. While the path does exist, it is neither a"
-            " python file nor a directory: %s",
-            abspath,
-        )
-        raise TypeError(f"Unsupported path type: {abspath}")
-
-
-def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
+def plot_benchmark_array(benchmark: BenchmarkArray, config: ConfigBase) -> go.Figure:
     """Plot benchmark array."""
     fig = go.Figure()
     fig.add_trace(
@@ -83,7 +61,7 @@ def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
             benchmark.size,
             benchmark.cpu_time,
             "CPU Time",
-            Config.color,
+            config.color,
         )
     )
 
@@ -93,7 +71,7 @@ def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
             benchmark.complexity.cpu_coefficient,
             benchmark.complexity.big_o,
             f"CPU Time Fit ({benchmark.complexity.big_o})",
-            Config.line_color,
+            config.line_color,
         )
     )
 
@@ -105,7 +83,7 @@ def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
     )
 
     vals, labels = plotting.construct_log2_axis(benchmark.size)
-    if (p := len(vals) // Config.x_axis) > 0:
+    if (p := len(vals) // config.x_axis) > 0:
         vals = vals[:: p + 1]
         labels = labels[:: p + 1]
 
@@ -126,7 +104,7 @@ def plot_benchmark_array(benchmark: BenchmarkArray) -> go.Figure:
         ),
         legend_title="Timing",
         font=dict(
-            family=Config.font,
+            family=config.font,
             size=12,
         ),
     )
@@ -153,7 +131,8 @@ def _run() -> BenchmarkContext:
 
     text: str = stdout.read()
     error: str = stderr.read()
-    stdout.close(), stderr.close()  # pylint: disable=W0106
+    stdout.close()
+    stderr.close()
 
     # Pass stderr from google_benchmark
     if len(error):
@@ -170,10 +149,10 @@ def _run() -> BenchmarkContext:
     return context
 
 
-def save(context: BenchmarkContext, cache_dir: str) -> None:
+def save(context: BenchmarkContext, cache_dir: str, config: ConfigBase) -> None:
     """Save benchmark data."""
     for j in context.benchmarks:
-        figure: go.Figure = plot_benchmark_array(j)
+        figure: go.Figure = plot_benchmark_array(j, config)
         plotting.to_html(figure, os.path.join(cache_dir, "out.html"), "a")
 
     # TODO: Save data to database. Serialize to json in the interim.
@@ -193,7 +172,7 @@ def save(context: BenchmarkContext, cache_dir: str) -> None:
         f.write(serialized)
 
 
-def run(cache_dir: str) -> None:
+def run(cache_dir: str, config: ConfigBase) -> None:
     """BenchMatcha Runner."""
     context: BenchmarkContext = _run()
 
@@ -202,10 +181,29 @@ def run(cache_dir: str) -> None:
     # for bench in context.benchmarks:
     #     analyze_complexity(bench.size, bench.real_time)
 
-    save(context, cache_dir)
+    save(context, cache_dir, config)
 
 
-def get_args() -> argparse.Namespace:
+def prepare_benchmark_sys_args(known: argparse.Namespace, unknown: list[str]) -> None:
+    """Handle google benchmark system arg preparation."""
+    # Google_benchmark CLI arguments, For Reference:
+    # https://github.com/google/benchmark/blob/main/src/benchmark.cc#L751-L812
+    problems: list[str] = []
+    for k in filter(
+        lambda x: isinstance(x, str) and "--benchmark_format=" in x,
+        unknown,
+    ):
+        if "json" not in k:
+            log.warning("Benchmark Format must be json: `%s`", k)
+            problems.append(k)
+    for p in problems:
+        unknown.remove(p)
+
+    # Prune / Reset for google_benchmark
+    sys.argv = [sys.argv[0], *unknown, *known.others]
+
+
+def get_args() -> tuple[argparse.Namespace, list[str]]:
     """Get BenchMatcha command line arguments and reset to support google_benchmark."""
     args = argparse.ArgumentParser("benchmatcha", conflict_handler="error")
     args.add_argument(
@@ -282,31 +280,15 @@ def get_args() -> argparse.Namespace:
     # )
     known, unknown = args.parse_known_args()
 
-    # NOTE: Only validate `benchmark_format` argument from google_benchmark cli, since
-    #       we require json format to correctly work downstream. All other argument
-    #       validations should be handled by google_benchmark cli parsing directly.
-    # Google_benchmark CLI arguments, For Reference:
-    # https://github.com/google/benchmark/blob/main/src/benchmark.cc#L751-L812
-    problems: list[str] = []
-    for k in filter(
-        lambda x: isinstance(x, str) and "--benchmark_format=" in x,
-        unknown,
-    ):
-        if "json" not in k:
-            log.warning("Benchmark Format must be json: `%s`", k)
-            problems.append(k)
-    for p in problems:
-        unknown.remove(p)
-
-    # Prune / Reset for google_benchmark
-    sys.argv = [sys.argv[0], *unknown, *known.others]
-
-    return known
+    return known, unknown
 
 
 def main() -> None:
     """Primary CLI Entry Point."""
-    args: argparse.Namespace = get_args()
+    args: argparse.Namespace
+    unknowns: list[str]
+    args, unknowns = get_args()
+    default_config = ConfigBase()
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
@@ -314,20 +296,22 @@ def main() -> None:
 
     if os.path.exists(args.config):
         log.debug("Updating default configuration from file: %s", args.config)
-        update_config_from_pyproject(args.config)
+        update_config_from_pyproject(args.config, default_config)
+    else:
+        log.debug("Configuration file not found: %s", args.config)
 
     # NOTE: Configuration Args should overwrite values set in config file
     if args.color is not None:
         log.debug("Overriding color from arg: %s", args.color)
-        Config.color = args.color
+        default_config.color = args.color
 
     if args.line_color is not None:
         log.debug("Overriding line_color from arg: %s", args.line_color)
-        Config.line_color = args.line_color
+        default_config.line_color = args.line_color
 
     if args.x_axis is not None:
         log.debug("Overriding x_axis from arg: %s", args.x_axis)
-        Config.x_axis = args.x_axis
+        default_config.x_axis = int(args.x_axis)
 
     # Create cache directory if it does not exist
     if not os.path.exists(cache := args.cache):
@@ -338,4 +322,5 @@ def main() -> None:
     for path in args.path:
         manage_registration(path)
 
-    run(cache)
+    prepare_benchmark_sys_args(args, unknowns)
+    run(cache, default_config)
