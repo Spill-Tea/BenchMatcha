@@ -29,101 +29,147 @@
 
 """Test config module."""
 
-from contextlib import contextmanager
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
+import toml
 
 from BenchMatcha import config
 
 
 @pytest.fixture
-def toml_str() -> str:
-    """Mock toml config text."""
-    return """
-[tool.BenchMatcha]
-color="#FFF"
-line_color="#333"
-font="Courier"
-upsupported_key="test"
-"""
-
-
-@pytest.fixture
-def toml_data() -> dict:
-    """Mock toml config as a dictionary object."""
+def toml_inner() -> dict:
     return {
-        "tool": {
-            "BenchMatcha": {
-                "color": "#FFF",
-                "line_color": "#333",
-                "font": "Courier",
-                "upsupported_key": "test",
-            }
-        }
+        "color": "#FFF",
+        "line_color": "#333",
+        "font": "Courier",
+        "x_axis": 5,
+        "unsupported_key": "test",
     }
 
 
-@contextmanager
-def reset(c: type[config.Config]):
-    """Simple contextmanager to reset config to original default values."""
-    default: dict = {key: getattr(c, key) for key in c.__annotations__.keys()}
-    yield
-
-    for k, v in default.items():
-        setattr(c, k, v)
-        assert getattr(c, k) == default[k], f"Expected Value to be reset: {k}"
+@pytest.fixture
+def toml_data(toml_inner: dict) -> dict:
+    """Mock toml config as a dictionary object."""
+    return {"tool": {"BenchMatcha": toml_inner}}
 
 
-def test_config_load(toml_str: str, toml_data: dict) -> None:
+@pytest.fixture
+def toml_str(toml_data: dict) -> str:
+    """Mock toml config text."""
+    return toml.dumps(toml_data)
+
+
+@pytest.fixture
+def configuration() -> config.ConfigBase:
+    """Create configuration and reset instance singleton."""
+    return config.ConfigBase()
+
+
+@pytest.mark.parametrize(
+    ["obj", "keys", "expected"],
+    [
+        ({}, ("a", "b", "c"), {}),
+        ({"a": {"b": {"c": "d"}}}, ("a", "b", "c"), "d"),
+        ({"a": {"b": {"d": "d"}}}, ("a", "b", "c"), {}),
+    ],
+)
+def test_traverse(obj: dict, keys: tuple[str], expected: str) -> None:
+    """Test dictionary traversal works as anticipated."""
+    result = config.traverse(obj, keys)
+    assert result == expected
+
+
+def test_config_load(
+    toml_str: str,
+    toml_data: dict,
+    configuration: config.ConfigBase,
+) -> None:
     """Confirm toml data loads correctly."""
-    with reset(config.Config), StringIO(toml_str) as stream:
-        instance = config.ConfigUpdater(stream)
+    with StringIO(toml_str) as stream:
+        instance = config.ConfigUpdater(stream, configuration)
         result = instance.load()
 
     assert result == toml_data, "Expected same object"
 
 
-def _assert_config_is_updated() -> None:
-    assert config.Config.color == "#FFF", "Expected color to be updated."
-    assert config.Config.line_color == "#333", "Expected line color to be updated."
-    assert config.Config.font == "Courier", "Expected font to be updated."
-    assert not hasattr(config.Config, "upsupported_key"), (
+def _assert_config_is_updated(conf: config.ConfigBase) -> None:
+    assert conf.color == "#FFF", "Expected color to be updated."
+    assert conf.line_color == "#333", "Expected line color to be updated."
+    assert conf.font == "Courier", "Expected font to be updated."
+    assert not hasattr(conf, "unsupported_key"), (
         "Expected unsupported key to be bypassed."
     )
 
 
-def test_config_private_update(toml_data: dict) -> None:
+def test_config_private_update(
+    toml_inner: dict,
+    configuration: config.ConfigBase,
+) -> None:
     """Confirm config data is updated correctly."""
-    with reset(config.Config):
-        instance = config.ConfigUpdater("")
-        instance._update(toml_data)
-        _assert_config_is_updated()
+    instance = config.ConfigUpdater("", configuration)
+    instance._update(toml_inner)
+    _assert_config_is_updated(configuration)
 
 
-def test_config_update(toml_str: str) -> None:
+def test_config_update(
+    toml_str: str,
+    configuration: config.ConfigBase,
+) -> None:
     """Confirm toml data loads correctly."""
-    with reset(config.Config), StringIO(toml_str) as stream:
-        instance = config.ConfigUpdater(stream)
+    with StringIO(toml_str) as stream:
+        instance = config.ConfigUpdater(stream, configuration)
         instance.update()
-        _assert_config_is_updated()
+
+    _assert_config_is_updated(configuration)
+
+
+def test_config_json(
+    toml_str: str,
+    toml_inner: dict,
+    configuration: config.ConfigBase,
+) -> None:
+    """Confirm configuration returns as json object correctly."""
+    with StringIO(toml_str) as stream:
+        instance = config.ConfigUpdater(stream, configuration)
+        instance.update()
+
+    _assert_config_is_updated(configuration)
+    toml_inner.pop("unsupported_key", None)
+    assert configuration.tojson() == toml_inner, "Unexpected json object data."
 
 
 @patch.object(config.ConfigUpdater, "load")
-def test_config_update_mock(mock: MagicMock, toml_data: dict) -> None:
+def test_config_update_mock(
+    mock: MagicMock,
+    toml_data: dict,
+    configuration: config.ConfigBase,
+) -> None:
     """Confirm config is updated by mocking load method of ConfigUpdater."""
     mock.return_value = toml_data
-    with reset(config.Config):
-        instance = config.ConfigUpdater("")
-        instance.update()
-        _assert_config_is_updated()
+    instance = config.ConfigUpdater("", configuration)
+    instance.update()
+    _assert_config_is_updated(configuration)
 
 
 @patch.object(config.ConfigUpdater, "load")
-def test_config_update_function(mock: MagicMock, toml_data: dict) -> None:
+def test_config_update_function(
+    mock: MagicMock,
+    toml_data: dict,
+    configuration: config.ConfigBase,
+) -> None:
     """Confirm config is updated from available function api."""
     mock.return_value = toml_data
-    with reset(config.Config):
-        config.update_config_from_pyproject("")
-        _assert_config_is_updated()
+    config.update_config_from_pyproject("", configuration)
+    _assert_config_is_updated(configuration)
+
+
+def test_config_base_setters(configuration: config.ConfigBase) -> None:
+    """Confirm class setattr engages designated converters."""
+    configuration.x_axis = "5"
+    assert isinstance(configuration.x_axis, int), "Expected value to be coerced to int."
+    assert configuration.x_axis == 5, "Expected value to be updated to 5."
+
+    setattr(configuration, "x_axis", "7")  # noqa: B010
+    assert configuration.x_axis == 7, "Expected value to be updated to 7."
