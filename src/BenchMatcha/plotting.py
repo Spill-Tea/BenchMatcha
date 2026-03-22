@@ -36,6 +36,8 @@ import plotly.graph_objs as go  # type: ignore[import-untyped]
 from plotly.express import colors  # type: ignore[import-untyped]
 from plotly.io import to_json as _to_json  # type: ignore[import-untyped]
 
+from .config import ConfigBase
+from .structure import BenchmarkArray
 from .utils import _simple_stats, power_of_2
 
 
@@ -245,3 +247,71 @@ def draw_complexity_line(
         ),
         opacity=0.7,
     )
+
+
+def plot_benchmark_array(benchmark: BenchmarkArray, config: ConfigBase) -> go.Figure:
+    """Plot benchmark array.
+
+    Args:
+        benchmark (BenchmarkArray): benchmark array data.
+        config (ConfigBase): configuration settings.
+
+    Returns:
+        (go.Figure) returns plotly figure.
+
+    """
+    fig = go.Figure()
+    fig.add_trace(
+        create_scatter_trace(
+            benchmark.size,
+            benchmark.cpu_time,
+            "CPU Time",
+            config.color,
+        )
+    )
+
+    fig.add_trace(
+        draw_complexity_line(
+            benchmark.size,
+            benchmark.complexity.cpu_coefficient,
+            benchmark.complexity.big_o,
+            f"CPU Time Fit ({benchmark.complexity.big_o})",
+            config.line_color,
+        )
+    )
+
+    fig.add_annotation(
+        **create_annotation_text(
+            benchmark.complexity.big_o,
+            benchmark.complexity.rms,
+        )
+    )
+
+    vals, labels = construct_log2_axis(benchmark.size)
+    if (p := len(vals) // config.x_axis) > 0:
+        vals = vals[:: p + 1]
+        labels = labels[:: p + 1]
+
+    fig.update_layout(
+        title=f"Benchmark Results<br><i>{benchmark.function}</i>",
+        xaxis=dict(
+            type="log",
+            tickvals=vals,
+            ticktext=labels,
+            tickmode="array",
+            title="Input Size (n)",
+        ),
+        yaxis=dict(
+            title=f"Time ({benchmark.unit})",
+            type="log",
+            dtick=1,
+            exponentformat="power",
+        ),
+        legend_title="Timing",
+        font=dict(
+            family=config.font,
+            size=12,
+        ),
+    )
+
+    return fig
