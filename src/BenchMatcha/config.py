@@ -30,7 +30,7 @@
 """Default runner configuration."""
 
 import logging
-from typing import Any, Iterator
+from typing import Any, Iterable
 
 import toml  # type: ignore[import-untyped]
 from attrs import asdict, define, field
@@ -39,7 +39,7 @@ from attrs import asdict, define, field
 log: logging.Logger = logging.getLogger(__name__)
 
 
-def traverse(d: dict, keys: Iterator[str]) -> dict:
+def traverse(d: dict, keys: Iterable[str]) -> dict:
     """Safely traverse dictionary keys."""
     for k in keys:
         d = d.get(k, {})
