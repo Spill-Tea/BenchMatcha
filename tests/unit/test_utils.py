@@ -27,6 +27,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""Unit test utils module."""
+
 import numpy as np
 import pytest
 
@@ -38,20 +40,20 @@ _power2: list[tuple[int, int]] = [
     (1, 1),
 ]
 for j in range(2, 24):
-    value = 1 << j
-    _power2.append((value - 1, value))
-    _power2.append((value, value))
-    _power2.append((value + 1, 1 << (j + 1)))
+    _v = 1 << j
+    _power2.append((_v - 1, _v))
+    _power2.append((_v, _v))
+    _power2.append((_v + 1, 1 << (j + 1)))
 
 
 @pytest.mark.parametrize(["value", "expected"], _power2)
-def test_power_of_2(value: int, expected: int):
+def test_power_of_2(value: int, expected: int) -> None:
     """Test returns next power of two."""
-    result = utils.power_of_2(value)
+    result: int = utils.power_of_2(value)
     assert result == expected, f"Unexpected result: {result}"
 
 
-def test_simple_stats():
+def test_simple_stats() -> None:
     """Test mean and std."""
     x = np.asarray([[1, 2, 3], [2, 3, 1], [3, 1, 2]])
     result = utils._simple_stats(x)
@@ -72,7 +74,7 @@ def test_simple_stats():
         ("oLambda", "f(N)"),
     ],
 )
-def test_bigo_enum_get(value: str, expected: str):
+def test_bigo_enum_get(value: str, expected: str) -> None:
     """Test conversion of big o notation identifier get classmethod."""
     result: str = utils.BigO.get(value)
     assert result == expected, "Unexpected result."
@@ -90,7 +92,7 @@ def test_bigo_enum_get(value: str, expected: str):
         ("f(N)", "oLambda"),
     ],
 )
-def test_bigo_enum_back(value: str, expected: str):
+def test_bigo_enum_back(value: str, expected: str) -> None:
     """Test conversion of big o notation identifier back classmethod."""
     result: str = utils.BigO.back(value)
     assert result == expected, "Unexpected result."

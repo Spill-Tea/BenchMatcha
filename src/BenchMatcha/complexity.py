@@ -71,15 +71,16 @@ class FitResult:
 
 # Define common complexity functions with all coefficients and intercept
 Equation = (
-    Callable[[np.ndarray, float, float], np.ndarray]
+    Callable[[np.ndarray, float], np.ndarray]
+    | Callable[[np.ndarray, float, float], np.ndarray]
     | Callable[[np.ndarray, float, float, float], np.ndarray]
     | Callable[[np.ndarray, float, float, float, float], np.ndarray]
 )
 
 
-def constant(n: np.ndarray, a: float, b: float) -> np.ndarray:
+def constant(n: np.ndarray, a: float) -> np.ndarray:
     """Constant O(1) equation."""
-    return a * np.ones_like(n) + b
+    return a * np.ones_like(n)
 
 
 def logn(n: np.ndarray, a: float, b: float) -> np.ndarray:

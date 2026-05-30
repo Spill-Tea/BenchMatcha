@@ -36,6 +36,32 @@ import plotly.graph_objs as go
 import pytest
 
 from BenchMatcha import plotting
+from BenchMatcha.config import ConfigBase
+from BenchMatcha.structure import BenchmarkArray, ComplexityInfo
+
+
+@pytest.fixture
+def bench_arr():
+    """Sample BenchmarkArray instance object."""
+    name: str = "test"
+    c = ComplexityInfo(
+        function=name,
+        big_o="lgN",
+        real_coefficient=1.0,
+        cpu_coefficient=2.0,
+    )
+
+    b = BenchmarkArray(
+        function=name,
+        unit="s",
+        size=np.asarray([2, 4, 8]),
+        iterations=np.asarray([[100, 50, 25], [100, 50, 25], [100, 50, 25]]),
+        real_time=np.asarray([[5.2, 5.6, 5.3], [10.3, 10.2, 10.0], [15.3, 15.1, 15.2]]),
+        cpu_time=np.asarray([[5.2, 5.2, 5.0], [10.1, 10.0, 9.9], [15.2, 14.9, 15.0]]),
+        complexity=c,
+    )
+
+    return b
 
 
 def test_serialization_to_html():
@@ -144,3 +170,9 @@ def test_draw_complexity_line() -> None:
     x = np.arange(20)
     result = plotting.draw_complexity_line(x, 1.2, "N", "test", "red")
     assert isinstance(result, go.Scatter)
+
+
+def test_plot_benchmark_array(bench_arr: BenchmarkArray):
+    """Confirm an array is constructed."""
+    result = plotting.plot_benchmark_array(bench_arr, ConfigBase())
+    assert isinstance(result, go.Figure), "Expected a figure object."

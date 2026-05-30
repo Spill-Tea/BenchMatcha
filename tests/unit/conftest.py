@@ -27,6 +27,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""Common pytest fixtures for unit test suite."""
+
 import tempfile
 from collections.abc import Iterator
 
@@ -35,6 +37,7 @@ import pytest
 
 @pytest.fixture
 def mock_context() -> str:
+    """Sample output from google_benchmark context."""
     return """
 "context": {
     "date": "2025-07-13T12:09:31-07:00",
@@ -73,6 +76,7 @@ def mock_context() -> str:
 
 @pytest.fixture
 def mock_bench() -> str:
+    """Sample output from google_benchmark benchmarks."""
     return """
 "benchmarks": [
     {
@@ -136,12 +140,13 @@ def mock_bench() -> str:
 
 @pytest.fixture
 def mock_data(mock_context: str, mock_bench: str) -> str:
-    """mock benchmark data."""
+    """Mock google_benchmark json data."""
     return "{" + f"{mock_context}{mock_bench}" + "}"
 
 
 @pytest.fixture
 def mock_file(mock_data: str) -> Iterator[tempfile._TemporaryFileWrapper]:
+    """Mock temporary file wrapper around mock google_benchmark json data."""
     with tempfile.NamedTemporaryFile("w+") as f:
         f.write(mock_data)
         f.seek(0)

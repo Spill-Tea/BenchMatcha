@@ -27,6 +27,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""Unit test errors module."""
+
 import builtins
 from collections.abc import Callable, Iterator
 from json import JSONDecodeError
@@ -38,6 +40,7 @@ from BenchMatcha import errors
 
 @pytest.fixture
 def register_error() -> Iterator[Callable[[type[Exception]], type[Exception]]]:
+    """Register custom error dynamically with teardown."""
     e: type[Exception] | None = None
 
     def inner(exc: type[Exception]) -> type[Exception]:

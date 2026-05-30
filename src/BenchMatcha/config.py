@@ -30,17 +30,33 @@
 """Default runner configuration."""
 
 import logging
+from typing import Any, Iterable
 
 import toml  # type: ignore[import-untyped]
-
-from . import plotting
+from attrs import asdict, define, field
 
 
 log: logging.Logger = logging.getLogger(__name__)
 
 
-class Config:
-    """default configuration.
+def traverse(d: dict, keys: Iterable[str]) -> dict:
+    """Safely traverse dictionary keys."""
+    for k in keys:
+        d = d.get(k, {})
+
+    return d
+
+
+@define
+class _ConfigBase:
+    def tojson(self) -> dict[str, Any]:
+        """Convert instance into json object."""
+        return asdict(self, recurse=True)
+
+
+@define
+class ConfigBase(_ConfigBase):
+    """default configuration settings.
 
     Attributes:
         color (str): plot marker color.
@@ -50,10 +66,13 @@ class Config:
 
     """
 
-    color: str = plotting.Prism[3]
-    line_color: str = plotting.Prism[4]
-    font: str = "Space Grotesk Light, Courier New, monospace"
-    x_axis: int = 13
+    color: str = field(converter=str, default="#0f8554")
+    line_color: str = field(converter=str, default="#73af48")
+    font: str = field(
+        converter=str,
+        default="Space Grotesk Light, Courier New, monospace",
+    )
+    x_axis: int = field(converter=int, default=13)
 
 
 class ConfigUpdater:
@@ -61,37 +80,51 @@ class ConfigUpdater:
 
     Args:
         path (str): path to valid configuration file.
-        config (Config): configuration class to update.
+        config (_ConfigBase): configuration class to update.
 
     """
 
     path: str
-    config: type[Config]
+    config: _ConfigBase
+    _tool_key: str = "BenchMatcha"
 
-    def __init__(self, path: str, config: type[Config] = Config) -> None:
+    def __init__(self, path: str, config: _ConfigBase) -> None:
         self.path = path
         self.config = config
 
-    def load(self) -> dict:
+    def load(self) -> dict[str, Any]:
         """Load toml data from path."""
         return toml.load(self.path)
 
-    def _update(self, data: dict) -> None:
-        for key, value in data.get("tool", {}).get("BenchMatcha", {}).items():
+    def _update(self, data: dict[str, Any]) -> None:
+        for key, value in data.items():
+            # Support recursive configuration
+            if isinstance(value, dict):
+                previous = self.config
+                current = getattr(self.config, key)
+                if isinstance(current, _ConfigBase):
+                    self.config = current
+                    self._update(value)
+                    self.config = previous
+                    continue
+
             if not hasattr(self.config, key):
                 log.info("Unsupported tool key: %s", key)
                 continue
-
             setattr(self.config, key, value)
 
     def update(self) -> None:
         """Parse toml path and update default configuration."""
-        data: dict = self.load()
-        self._update(data)
+        data: dict[str, Any] = self.load()
+        self._update(traverse(data, ("tool", self._tool_key)))
 
 
-def update_config_from_pyproject(path: str) -> None:
+def update_config_from_pyproject(path: str, config: _ConfigBase) -> None:
     """Update default config from pyproject toml file.
+
+    Args:
+        path (str): Filepath to pyproject.toml config.
+        config (ConfigBase): configuration class object.
 
     Example:
 
@@ -104,5 +137,5 @@ def update_config_from_pyproject(path: str) -> None:
             x_axis=5
 
     """
-    cu = ConfigUpdater(path)
+    cu = ConfigUpdater(path, config)
     cu.update()

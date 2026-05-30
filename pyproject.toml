@@ -84,7 +84,7 @@ warn_unused_ignores = true
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["orjson"]
-ignore = ["tests", "dist", "build"]
+ignore = ["dist", "build"]
 fail-under = 9.0
 jobs = 0
 limit-inference-results = 100
@@ -116,6 +116,13 @@ disable = [
 disable = [
   "W0613", # unused-argument
   "W0231", # super-init-not-called
+]
+
+[tool.pylint."tests/*"]
+disable = [
+  "W0212", # protected-access
+  "W0612", # unused-variable
+  "W0621", # redefined-outer-name  --> pytest fixtures
 ]
 
 [tool.ruff]
