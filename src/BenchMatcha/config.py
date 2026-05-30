@@ -47,8 +47,14 @@ def traverse(d: dict, keys: Iterable[str]) -> dict:
     return d
 
 
+class _ConfigBase:
+    def tojson(self) -> dict[str, Any]:
+        """Convert instance into json object."""
+        return asdict(self, recurse=True)
+
+
 @define
-class ConfigBase:
+class ConfigBase(_ConfigBase):
     """default configuration settings.
 
     Attributes:
@@ -67,25 +73,21 @@ class ConfigBase:
     )
     x_axis: int = field(converter=int, default=13)
 
-    def tojson(self) -> dict[str, Any]:
-        """Convert instance into json object."""
-        return asdict(self, recurse=True)
-
 
 class ConfigUpdater:
     """Configuration updater through pyproject config file.
 
     Args:
         path (str): path to valid configuration file.
-        config (Config): configuration class to update.
+        config (_ConfigBase): configuration class to update.
 
     """
 
     path: str
-    config: ConfigBase
+    config: _ConfigBase
     _tool_key: str = "BenchMatcha"
 
-    def __init__(self, path: str, config: ConfigBase) -> None:
+    def __init__(self, path: str, config: _ConfigBase) -> None:
         self.path = path
         self.config = config
 
@@ -95,6 +97,16 @@ class ConfigUpdater:
 
     def _update(self, data: dict[str, Any]) -> None:
         for key, value in data.items():
+            # Support recursive configuration
+            if isinstance(value, dict):
+                previous = self.config
+                current = getattr(self.config, key)
+                if isinstance(current, _ConfigBase):
+                    self.config = current
+                    self._update(value)
+                    self.config = previous
+                    continue
+
             if not hasattr(self.config, key):
                 log.info("Unsupported tool key: %s", key)
                 continue
@@ -106,7 +118,7 @@ class ConfigUpdater:
         self._update(traverse(data, ("tool", self._tool_key)))
 
 
-def update_config_from_pyproject(path: str, config: ConfigBase) -> None:
+def update_config_from_pyproject(path: str, config: _ConfigBase) -> None:
     """Update default config from pyproject toml file.
 
     Args:

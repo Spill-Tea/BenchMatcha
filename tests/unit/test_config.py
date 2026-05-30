@@ -34,6 +34,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import toml
+from attrs import define, field
 
 from BenchMatcha import config
 
@@ -173,3 +174,55 @@ def test_config_base_setters(configuration: config.ConfigBase) -> None:
 
     setattr(configuration, "x_axis", "7")  # noqa: B010
     assert configuration.x_axis == 7, "Expected value to be updated to 7."
+
+
+@define
+class A(config._ConfigBase):
+    a: str = field(default="a")
+    b: int = field(default=1)
+
+
+@define
+class B(config._ConfigBase):
+    a: A = field(factory=A)
+    b: str = field(default="b")
+
+
+@pytest.fixture
+def toml_data_b() -> str:
+    return """
+[tool.BenchMatcha]
+b = "loaded b"
+
+[tool.BenchMatcha.a]
+a = "loaded a"
+b = 5
+"""
+
+
+@patch.object(config.ConfigUpdater, "load")
+def test_recursive_update_function(
+    mock: MagicMock,
+    toml_data_b: str,
+):
+    """Confirm nested recursive configurations are appropriately updated."""
+    # sanity checks
+    con = B()
+    assert con.a.a == "a"
+    assert con.a.b == 1
+    assert con.b == "b"
+
+    # setup
+    data: dict = toml.loads(toml_data_b)
+    mock.return_value = data
+
+    instance = config.ConfigUpdater("", con)
+    instance.update()
+
+    # checks
+    assert con.a.a == "loaded a"
+    assert con.a.b == 5
+    assert con.b == "loaded b"
+
+    # sanity
+    assert instance.config is con, "Expected config to be same on instance."
