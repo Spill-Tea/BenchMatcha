@@ -47,6 +47,7 @@ def traverse(d: dict, keys: Iterable[str]) -> dict:
     return d
 
 
+@define
 class _ConfigBase:
     def tojson(self) -> dict[str, Any]:
         """Convert instance into json object."""
